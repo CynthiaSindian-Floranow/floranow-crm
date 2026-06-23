@@ -63,7 +63,8 @@
     "docs:generate": "tsx packages/twenty-docs/scripts/generate-docs-json.ts",
     "docs:generate-navigation-template": "tsx packages/twenty-docs/scripts/generate-navigation-template.ts",
     "docs:generate-paths": "tsx packages/twenty-docs/scripts/generate-documentation-paths.ts",
-    "start": "npx concurrently --kill-others 'npx nx run-many -t start -p twenty-server twenty-front' 'npx wait-on tcp:3000 && npx nx run twenty-server:worker'"
+    "start": "npx concurrently --kill-others 'npx nx run-many -t start -p twenty-server twenty-front' 'npx wait-on tcp:3000 && npx nx run twenty-server:worker'",
+    "dev:local": "npx concurrently --kill-others -n server,worker,front -c blue,magenta,green 'cd packages/twenty-server && npx nest start --watch' 'npx wait-on tcp:3000 && cd packages/twenty-server && node dist/queue-worker/queue-worker.js' 'cd packages/twenty-front && npx vite --port 3001'"
   },
   "workspaces": {
     "packages": [

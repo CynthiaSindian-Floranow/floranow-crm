@@ -1,3 +1,4 @@
+import path from 'node:path';
 import dts from 'rollup-plugin-dts';
 
 const external = (id) => {
@@ -7,7 +8,10 @@ const external = (id) => {
   if (id.startsWith('@/')) {
     return false;
   }
-  return !id.startsWith('.') && !id.startsWith('/');
+  // Relative imports are resolved to absolute paths before `external` is called.
+  // On Windows these start with a drive letter (e.g. `C:\`) rather than `/`, so
+  // use path.isAbsolute to detect them cross-platform and keep them internal.
+  return !id.startsWith('.') && !path.isAbsolute(id);
 };
 
 const plugins = [

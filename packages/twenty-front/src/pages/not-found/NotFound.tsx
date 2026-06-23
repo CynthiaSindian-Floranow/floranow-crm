@@ -1,11 +1,4 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { lazy, Suspense } from 'react';
-
-const BackgroundMockPage = lazy(() =>
-  import('@/sign-in-background-mock/components/BackgroundMockPage').then(
-    (module) => ({ default: module.BackgroundMockPage }),
-  ),
-);
 import { AppPath } from 'twenty-shared/types';
 
 import { RootStackingContextZIndices } from '@/ui/layout/constants/RootStackingContextZIndices';
@@ -24,8 +17,7 @@ import { UndecoratedLink } from 'twenty-ui-deprecated/navigation';
 
 const StyledBackDrop = styled.div`
   align-items: center;
-  backdrop-filter: ${themeCssVariables.blur.light};
-  background: ${themeCssVariables.background.transparent.secondary};
+  background: ${themeCssVariables.background.primary};
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -46,7 +38,7 @@ export const NotFound = () => {
 
   return (
     <>
-      <PageTitle title={t`Page Not Found | Twenty`} />
+      <PageTitle title={t`Page Not Found | Floranow`} />
       <StyledBackDrop>
         <AnimatedPlaceholderErrorContainer>
           <AnimatedPlaceholder type="error404" />
@@ -68,9 +60,6 @@ export const NotFound = () => {
           </StyledButtonContainer>
         </AnimatedPlaceholderErrorContainer>
       </StyledBackDrop>
-      <Suspense fallback={null}>
-        <BackgroundMockPage />
-      </Suspense>
     </>
   );
 };

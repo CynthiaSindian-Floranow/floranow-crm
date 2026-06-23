@@ -1,19 +1,13 @@
 import { useSignInUp } from '@/auth/sign-in-up/hooks/useSignInUp';
 import { useSignInUpForm } from '@/auth/sign-in-up/hooks/useSignInUpForm';
-import {
-  SignInUpStep,
-  signInUpStepState,
-} from '@/auth/states/signInUpStepState';
+import { SignInUpStep } from '@/auth/states/signInUpStepState';
 import { workspacePublicDataState } from '@/auth/states/workspacePublicDataState';
 import { styled } from '@linaria/react';
 
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
-import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 
-import { Logo } from '@/auth/components/Logo';
 import { Title } from '@/auth/components/Title';
 import { EmailVerificationSent } from '@/auth/sign-in-up/components/EmailVerificationSent';
-import { FooterNote } from '@/auth/sign-in-up/components/FooterNote';
 import { SignInUpGlobalScopeForm } from '@/auth/sign-in-up/components/SignInUpGlobalScopeForm';
 import { SignInUpWorkspaceScopeForm } from '@/auth/sign-in-up/components/SignInUpWorkspaceScopeForm';
 import { WorkspaceSelectionFooter } from '@/auth/sign-in-up/components/WorkspaceSelectionFooter';
@@ -36,8 +30,6 @@ import { useSearchParams } from 'react-router-dom';
 import { isDefined } from 'twenty-shared/utils';
 import { Loader } from 'twenty-ui-deprecated/feedback';
 import { themeCssVariables } from 'twenty-ui-deprecated/theme-constants';
-import { AnimatedEaseIn } from 'twenty-ui-deprecated/utilities';
-import { type PublicWorkspaceData } from '~/generated-metadata/graphql';
 
 const StyledLoaderContainer = styled.div`
   align-items: center;
@@ -49,45 +41,27 @@ const StyledLoaderContainer = styled.div`
 `;
 
 const StandardContent = ({
-  workspacePublicData,
   signInUpForm,
   signInUpStep,
   title,
-  onClickOnLogo,
 }: {
-  workspacePublicData: PublicWorkspaceData | null;
   signInUpForm: JSX.Element | null;
   signInUpStep: SignInUpStep;
   title: string;
-  onClickOnLogo: () => void;
 }) => {
   return (
     <ModalContent isVerticallyCentered isHorizontallyCentered>
-      <AnimatedEaseIn>
-        <Logo
-          secondaryLogo={workspacePublicData?.logo}
-          placeholder={workspacePublicData?.displayName}
-          onClick={onClickOnLogo}
-        />
-      </AnimatedEaseIn>
       <Title animate>{title}</Title>
       {signInUpForm}
       {signInUpStep === SignInUpStep.WorkspaceSelection && (
         <WorkspaceSelectionFooter />
       )}
-      {![
-        SignInUpStep.Password,
-        SignInUpStep.TwoFactorAuthenticationProvision,
-        SignInUpStep.TwoFactorAuthenticationVerification,
-        SignInUpStep.WorkspaceSelection,
-      ].includes(signInUpStep) && <FooterNote />}
     </ModalContent>
   );
 };
 
 export const SignInUp = () => {
   const { t } = useLingui();
-  const setSignInUpStep = useSetAtomState(signInUpStepState);
   const clientConfigApiStatus = useAtomStateValue(clientConfigApiStatusState);
 
   const { form } = useSignInUpForm();
@@ -104,12 +78,6 @@ export const SignInUp = () => {
     useWorkspaceFromInviteHash();
 
   const [searchParams] = useSearchParams();
-
-  const onClickOnLogo = () => {
-    setSignInUpStep(SignInUpStep.Init);
-  };
-
-  const isGlobalScope = isDefaultDomain && isMultiWorkspaceEnabled;
 
   const title = useMemo(() => {
     if (isDefined(workspaceInviteHash)) {
@@ -129,22 +97,10 @@ export const SignInUp = () => {
       return t`Verify code from the app`;
     }
 
-    if (isGlobalScope) {
-      return t`Welcome to Twenty`;
-    }
-
-    const workspaceName = workspacePublicData?.displayName;
-
-    if (!workspaceName) {
-      return t`Welcome to your workspace`;
-    }
-
-    return t`Welcome, ${workspaceName}.`;
+    return t`Sign in`;
   }, [
     workspaceInviteHash,
     signInUpStep,
-    workspacePublicData?.displayName,
-    isGlobalScope,
     t,
     workspaceFromInviteHash?.displayName,
   ]);
@@ -217,11 +173,9 @@ export const SignInUp = () => {
 
   return (
     <StandardContent
-      workspacePublicData={workspacePublicData}
       signInUpForm={signInUpForm}
       signInUpStep={signInUpStep}
       title={title}
-      onClickOnLogo={onClickOnLogo}
     />
   );
 };

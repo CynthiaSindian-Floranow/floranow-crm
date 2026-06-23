@@ -9,19 +9,13 @@ import { LayoutCustomizationBar } from '@/layout-customization/components/Layout
 import { AppNavigationDrawer } from '@/navigation/components/AppNavigationDrawer';
 import { MobileNavigationBar } from '@/navigation/components/MobileNavigationBar';
 import { PageDragDropProvider } from '@/navigation-menu-item/display/dnd/providers/PageDragDropProvider';
-import { BackgroundMockNavigationDrawer } from '@/sign-in-background-mock/components/BackgroundMockNavigationDrawer';
-import { Suspense, lazy } from 'react';
-
-const BackgroundMockPage = lazy(() =>
-  import('@/sign-in-background-mock/components/BackgroundMockPage').then(
-    (module) => ({ default: module.BackgroundMockPage }),
-  ),
-);
+import { ModalContainerContext } from '@/ui/layout/modal/contexts/ModalContainerContext';
 import { useShowFullscreen } from '@/ui/layout/fullscreen/hooks/useShowFullscreen';
 import { useShowAuthModal } from '@/ui/layout/hooks/useShowAuthModal';
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 import { styled } from '@linaria/react';
 import { AnimatePresence, LayoutGroup } from 'framer-motion';
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { themeCssVariables } from 'twenty-ui-deprecated/theme-constants';
 const StyledLayout = styled.div`
@@ -58,10 +52,57 @@ const StyledMainContainer = styled.div`
   overflow: hidden;
 `;
 
+// Brand-green base; the white brand panel is clipped diagonally so the green
+// shows through on the right side behind the login form.
+const StyledAuthSplitScreen = styled.div`
+  background: #005342;
+  display: flex;
+  flex: 1 1 100%;
+  min-width: 0;
+  width: 100%;
+`;
+
+// Left: white panel with a diagonal right edge, holding the Floranow logo.
+const StyledAuthBrandPanel = styled.div`
+  align-items: center;
+  background: #ffffff;
+  clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%);
+  display: flex;
+  flex: 1 1 52%;
+  justify-content: center;
+  min-width: 0;
+  padding: ${themeCssVariables.spacing[10]};
+`;
+
+const StyledAuthBrandLogo = styled.img`
+  height: auto;
+  max-width: 340px;
+  width: 70%;
+`;
+
+// Right: green panel (transparent over the split-screen) hosting the form.
+const StyledAuthLoginPanel = styled.div`
+  display: flex;
+  flex: 1 1 48%;
+  min-width: 0;
+  position: relative;
+
+  // The auth modal portals its backdrop into this panel; clear its translucent
+  // overlay so the whole green half stays a single uniform brand shade.
+  [data-testid='modal-backdrop'] {
+    background: transparent;
+  }
+`;
+
 export const DefaultLayout = () => {
   const isMobile = useIsMobile();
   const showAuthModal = useShowAuthModal();
   const useShowFullScreen = useShowFullscreen();
+
+  // Container the auth modal portals into so the login card stays within the
+  // right half of the split-screen instead of overlaying the whole viewport.
+  const [authLoginPanelElement, setAuthLoginPanelElement] =
+    useState<HTMLDivElement | null>(null);
 
   return (
     <>
@@ -73,30 +114,37 @@ export const DefaultLayout = () => {
             <StyledPageContainer>
               <PageDragDropProvider>
                 {!showAuthModal && <KeyboardShortcutMenu />}
-                {showAuthModal ? (
-                  <StyledNavigationDrawerWrapper>
-                    <BackgroundMockNavigationDrawer />
-                  </StyledNavigationDrawerWrapper>
-                ) : useShowFullScreen ? null : (
+                {!showAuthModal && !useShowFullScreen && (
                   <StyledNavigationDrawerWrapper>
                     <AppNavigationDrawer />
                   </StyledNavigationDrawerWrapper>
                 )}
                 {showAuthModal ? (
-                  <>
-                    <StyledMainContainer>
-                      <Suspense fallback={null}>
-                        <BackgroundMockPage />
-                      </Suspense>
-                    </StyledMainContainer>
-                    <AnimatePresence mode="wait">
-                      <LayoutGroup>
-                        <AuthModal>
-                          <Outlet />
-                        </AuthModal>
-                      </LayoutGroup>
-                    </AnimatePresence>
-                  </>
+                  <StyledMainContainer>
+                    <StyledAuthSplitScreen>
+                      {!isMobile && (
+                        <StyledAuthBrandPanel>
+                          <StyledAuthBrandLogo
+                            src="/images/logo/full-logo.png"
+                            alt="Floranow"
+                          />
+                        </StyledAuthBrandPanel>
+                      )}
+                      <StyledAuthLoginPanel ref={setAuthLoginPanelElement}>
+                        <ModalContainerContext.Provider
+                          value={{ container: authLoginPanelElement }}
+                        >
+                          <AnimatePresence mode="wait">
+                            <LayoutGroup>
+                              <AuthModal>
+                                <Outlet />
+                              </AuthModal>
+                            </LayoutGroup>
+                          </AnimatePresence>
+                        </ModalContainerContext.Provider>
+                      </StyledAuthLoginPanel>
+                    </StyledAuthSplitScreen>
+                  </StyledMainContainer>
                 ) : (
                   <StyledMainContainer>
                     <AppErrorBoundary FallbackComponent={AppPageErrorFallback}>

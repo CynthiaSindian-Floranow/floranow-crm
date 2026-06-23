@@ -23,3 +23,10 @@ form {
 .grecaptcha-badge {
   visibility: hidden !important;
 }
+
+/* Floranow: shift the blue raster empty-state/placeholder illustrations toward
+   brand green. This is an approximation via hue-rotate — replace the PNGs under
+   /images/placeholders/ with green artwork for an exact brand match. */
+img[src*="/images/placeholders/"] {
+  filter: hue-rotate(-78deg) saturate(0.85);
+}
