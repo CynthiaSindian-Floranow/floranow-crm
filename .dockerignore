@@ -1,5 +1,81 @@
+# ===========================================================================
+# Docker build context exclusions
+#
+# Build context is the repo root (docker build -f packages/twenty-docker/twenty/Dockerfile .)
+# Goal: keep the context small (faster cold/warm builds, less cache invalidation)
+# and ensure no secrets are ever sent to the daemon or baked into a layer.
+#
+# IMPORTANT: do not exclude any source the Dockerfile COPYs. The build needs the
+# source of: twenty-server, twenty-front, twenty-front-component-renderer,
+# twenty-ui, twenty-ui-deprecated, twenty-shared, twenty-sdk, twenty-client-sdk,
+# twenty-emails (plus root config, .yarn/releases, .yarn/patches and
+# packages/twenty-server/patches).
+# ===========================================================================
+
+# --- Version control / CI metadata ---
 .git
-.env
+.gitignore
+.github
+.husky
+
+# --- Dependencies (rebuilt in-container via `yarn workspaces focus`) ---
 **/node_modules
-.nx/cache
-packages/twenty-server/.env
+
+# --- Nx cache and daemon state (rebuilt in-container) ---
+.nx
+
+# --- Secrets: never send any real .env into the context or a build layer ---
+# (the Dockerfile's broad `COPY ./packages/<pkg>` lines would otherwise bake
+#  package-level .env files into intermediate layers)
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- Incremental TypeScript build state (never a build input) ---
+**/*.tsbuildinfo
+
+# --- Local build output (rebuilt in-container) ---
+# Exclude all package dist/ EXCEPT twenty-ui/dist, which ships committed
+# theme CSS the frontend build relies on (verified via `git ls-files`: it is the
+# only committed dist/). packages/twenty-front/build is left intact so the
+# Dockerfile can reuse a host-prebuilt frontend.
+**/dist
+!packages/twenty-ui/dist
+!packages/twenty-ui/dist/**
+
+# Yarn install-state is regenerated and never copied by the Dockerfile
+# (only .yarn/releases and .yarn/patches are copied).
+.yarn/install-state.gz
+.yarn/cache
+
+# --- Test / coverage / report artifacts (not needed to build the image) ---
+**/coverage
+**/storybook-static
+**/playwright-report
+**/test-results
+**/.vitest
+
+# --- Packages never referenced by this Dockerfile (no COPY targets them) ---
+packages/twenty-docs
+packages/twenty-website
+packages/twenty-companion
+packages/twenty-apps
+packages/twenty-cli
+packages/create-twenty-app
+packages/twenty-e2e-testing
+packages/twenty-zapier
+packages/twenty-utils
+packages/twenty-codex-plugin
+packages/twenty-oxlint-rules
+packages/twenty-claude-skills
+
+# --- Editor / OS noise ---
+**/.DS_Store
+**/Thumbs.db
+.vscode
+.idea
+*.swp
+
+# --- Logs and stray files ---
+**/*.log
+nul
