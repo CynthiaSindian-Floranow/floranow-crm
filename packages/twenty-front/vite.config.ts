@@ -156,6 +156,11 @@ export default defineConfig(({ mode }) => {
         '@nivo/arcs',
         '@react-spring/web',
         'd3-shape',
+        // CJS module reached via the lazy sign-in/2FA flow; pre-bundle so
+        // rolldown's CJS->ESM interop exposes the real default export instead
+        // of the `{ QRCode, default }` wrapper (otherwise <QRCode> renders an
+        // object and the 2FA screen crashes with "Element type is invalid").
+        'react-qr-code',
       ],
     },
 
