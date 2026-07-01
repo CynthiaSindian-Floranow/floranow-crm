@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-
 import { AppModule } from 'src/app.module';
 import { DatabaseCommandModule } from 'src/database/commands/database-command.module';
 import { FieldMetadataModule } from 'src/engine/metadata-modules/field-metadata/field-metadata.module';
