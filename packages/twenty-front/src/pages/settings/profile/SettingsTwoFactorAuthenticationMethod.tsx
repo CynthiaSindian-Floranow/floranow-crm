@@ -1,7 +1,7 @@
 import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { FormProvider } from 'react-hook-form';
-import QRCode from 'react-qr-code';
+import QRCodeImport from 'react-qr-code';
 
 import { qrCodeState } from '@/auth/states/qrCode';
 import { SaveAndCancelButtons } from '@/settings/components/SaveAndCancelButtons/SaveAndCancelButtons';
@@ -21,6 +21,14 @@ import { Section } from 'twenty-ui-deprecated/layout';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { themeCssVariables } from 'twenty-ui-deprecated/theme-constants';
 import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
+
+// rolldown's (vite 8) CJS->ESM interop can hand back the module namespace
+// ({ QRCode, default }) instead of the component, which makes <QRCode> render
+// an object and crashes the 2FA screen ("Element type is invalid ... got: object").
+// Normalize to the real default export so it works regardless of interop.
+const QRCode =
+  (QRCodeImport as unknown as { default?: typeof QRCodeImport }).default ??
+  QRCodeImport;
 
 const StyledQRCodeContainer = styled.div`
   align-items: flex-start;
