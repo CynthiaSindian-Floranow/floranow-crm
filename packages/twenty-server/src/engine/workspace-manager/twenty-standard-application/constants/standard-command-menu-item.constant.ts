@@ -214,6 +214,23 @@ export const STANDARD_COMMAND_MENU_ITEMS = {
     engineComponentKey: EngineComponentKey.EXPORT_VIEW,
     hotKeys: null,
   },
+  exportLeadsForRegistration: {
+    universalIdentifier: 'f1c0a5d2-3b47-4e69-9a18-6d2b7c84e9f3',
+    label: 'Export for Registration',
+    icon: 'IconFileExport',
+    isPinned: false,
+    // Shares Export View's position so it renders next to it in the menu.
+    position: 14,
+    shortLabel: 'Registration',
+    availabilityType: CommandMenuItemAvailabilityType.GLOBAL_OBJECT_CONTEXT,
+    conditionalAvailabilityExpression:
+      'pageType == "INDEX_PAGE" and permissionFlags.EXPORT_CSV',
+    availabilityObjectMetadataUniversalIdentifier:
+      STANDARD_OBJECTS.opportunity.universalIdentifier,
+    frontComponentUniversalIdentifier: null,
+    engineComponentKey: EngineComponentKey.EXPORT_LEADS_FOR_REGISTRATION,
+    hotKeys: null,
+  },
   seeDeletedRecords: {
     universalIdentifier: 'd63c21c3-9785-4750-be87-5f36269b8e0d',
     label: 'See deleted ${capitalize(objectMetadataItem.labelPlural)}',
