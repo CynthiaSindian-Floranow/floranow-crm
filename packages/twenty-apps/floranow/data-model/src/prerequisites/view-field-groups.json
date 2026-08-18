@@ -1,0 +1,26 @@
+[
+  {
+    "universalIdentifier": "917443e8-7f3c-466a-8733-b060d38595fc",
+    "name": "Profiling",
+    "position": 1,
+    "isVisible": true,
+    "viewUniversalIdentifier": "20202020-a003-4a03-8a03-0aa0b1ca3001",
+    "viewName": "opportunity / Opportunity Record Page Fields"
+  },
+  {
+    "universalIdentifier": "17f4a41f-720f-4e20-9526-3eee6c3d4f5f",
+    "name": "Qualification",
+    "position": 2,
+    "isVisible": true,
+    "viewUniversalIdentifier": "20202020-a003-4a03-8a03-0aa0b1ca3001",
+    "viewName": "opportunity / Opportunity Record Page Fields"
+  },
+  {
+    "universalIdentifier": "ca358b4c-f504-438f-b1dc-b7e23e18b172",
+    "name": "Retention & Win-Back",
+    "position": 9,
+    "isVisible": true,
+    "viewUniversalIdentifier": "20202020-a001-4a01-8a01-c0aba11c1001",
+    "viewName": "company / Company Record Page Fields"
+  }
+]

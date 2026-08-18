@@ -1,0 +1,31 @@
+{
+  "name": "floranow-data-model",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "^24.5.0",
+    "npm": "please-use-yarn",
+    "yarn": ">=4.0.2"
+  },
+  "keywords": [
+    "twenty-app"
+  ],
+  "packageManager": "yarn@4.13.0",
+  "scripts": {
+    "twenty": "twenty",
+    "model:pull": "tsx scripts/pull-model.ts",
+    "model:plan": "twenty dev --once --dry-run",
+    "model:wipe": "tsx scripts/wipe-custom-model.ts",
+    "model:check": "bash scripts/check-snapshot.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@types/pg": "^8.11.10",
+    "pg": "^8.13.1",
+    "tsx": "^4.17.0",
+    "twenty-sdk": "2.15.0",
+    "typescript": "^5.9.3"
+  }
+}

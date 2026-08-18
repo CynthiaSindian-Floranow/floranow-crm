@@ -217,8 +217,28 @@ This handles everything: starts Postgres + Redis (auto-detects local services vs
 
 **Note:** CI workflows (GitHub Actions) manage services via Actions service containers and run setup steps individually — they don't use this script.
 
+## Custom Data Model (dev → prod)
+
+Custom objects, fields, relations, views and record page layouts are metadata
+rows in each database, not code — they do not travel with a Jenkins deploy. They
+are synced by a generated Twenty application in
+`packages/twenty-apps/floranow/data-model/`.
+
+- The model is authored by hand in the **hosted dev UI**; dev is the source of truth.
+- `yarn model:pull` snapshots dev's metadata into `src/` as `define*()` files.
+- Committing and merging to `main` deploys it to **prod** via `app:install`.
+- The app is installed on **prod only** — never on hosted dev, where it would
+  collide with dev's own Custom application.
+- Everything under `src/` except `application.config.ts` and `roles/` is
+  generated. Never hand-edit it.
+
+Read `packages/twenty-apps/floranow/data-model/WORKFLOW.md` before changing
+anything in that package; `README.md` there is the command and credential
+reference.
+
 ## Important Files
 - `nx.json` - Nx workspace configuration with task definitions
 - `tsconfig.base.json` - Base TypeScript configuration
 - `package.json` - Root package with workspace definitions
 - `.cursor/rules/` - Detailed development guidelines and best practices
+- `packages/twenty-apps/floranow/data-model/` - Custom data model as code (see above)
