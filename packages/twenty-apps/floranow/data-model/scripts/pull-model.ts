@@ -13,7 +13,7 @@
 // the one in dev instead of dropping and recreating it.
 
 import { createHash } from 'node:crypto';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { Client } from 'pg';
@@ -49,6 +49,45 @@ const warnings: string[] = [];
 
 const warn = (message: string) => {
   warnings.push(message);
+};
+
+// Only the built-in Twenty Standard app is allowed to use these names. An
+// installed application is rejected with INVALID_FIELD_INPUT, so anything named
+// after one of them cannot ship and is skipped here rather than failing the
+// install. Read from the server source so the list cannot drift out of sync.
+const RESERVED_NAMES_SOURCE = join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  'twenty-shared',
+  'src',
+  'metadata',
+  'constants',
+  'reserved-metadata-name-keywords.constant.ts',
+);
+
+const loadReservedNames = (): Set<string> => {
+  try {
+    const source = readFileSync(RESERVED_NAMES_SOURCE, 'utf-8');
+    const names = [...source.matchAll(/'([A-Za-z][A-Za-z0-9]*)'/g)].map(
+      (match) => match[1],
+    );
+
+    if (names.length === 0) {
+      throw new Error('no names parsed');
+    }
+
+    return new Set(names);
+  } catch {
+    warn(
+      `Could not read the reserved name list from ${RESERVED_NAMES_SOURCE}. ` +
+        'Reserved-name collisions will not be caught here and will surface as install errors instead.',
+    );
+
+    return new Set();
+  }
 };
 
 // `core."indexFieldMetadata"` has no universalIdentifier column, but the
@@ -407,14 +446,39 @@ const main = async () => {
       return object ? object.nameSingular : 'unknown';
     };
 
+    const reservedNames = loadReservedNames();
+
     const customObjects = allObjects.filter(
       (row) => row.applicationId === customApplicationId,
     );
     const customObjectIds = new Set(customObjects.map((row) => row.id));
 
-    const customFields = allFields.filter(
-      (row) => row.applicationId === customApplicationId,
-    );
+    const customFields = allFields
+      .filter((row) => row.applicationId === customApplicationId)
+      .filter((row) => {
+        if (!reservedNames.has(row.name)) {
+          return true;
+        }
+
+        warn(
+          `Field "${objectComment(row.objectMetadataId)}.${row.name}" uses the reserved name "${row.name}" and cannot ship — an installed app may not use reserved names. ` +
+            'It is skipped, so the target will not have this field. Rename it in dev to include it.',
+        );
+
+        return false;
+      });
+
+    for (const object of allObjects) {
+      if (
+        object.applicationId === customApplicationId &&
+        (reservedNames.has(object.nameSingular) ||
+          reservedNames.has(object.namePlural))
+      ) {
+        warn(
+          `Object "${object.nameSingular}" uses a reserved name and cannot ship. Rename it in dev to include it.`,
+        );
+      }
+    }
 
     // Both sides of the four relations the SDK injects for us.
     const sdkInjectedFieldIds = new Set<string>();
@@ -874,10 +938,17 @@ const main = async () => {
 
     // ------------------------------------------------- view fields on foreign views
 
-    // A view field group is only expressible nested inside a defineView() for a
-    // view this app owns — there is no defineViewFieldGroup(). Groups the app
-    // owns that sit on someone else's view therefore cannot ship in the
-    // manifest, and have to be created on the target instance first.
+    // Record page sections on views this app does not own cannot ship at all:
+    //
+    //  - there is no standalone defineViewFieldGroup(); a group is only
+    //    expressible nested inside a defineView() for a view the app owns, and
+    //  - createCoreViewFieldGroup marks `universalIdentifier` @HideField(), so
+    //    the API cannot create one with the identifier dev uses either.
+    //
+    // So we drop the group reference from these view fields rather than ship an
+    // identifier that will not resolve on the target. The fields still install;
+    // they just land ungrouped on the record page. Every dropped group is
+    // recorded in src/prerequisites/view-field-groups.json.
     const unshippableFieldGroups: {
       universalIdentifier: string;
       name: string | null;
@@ -912,7 +983,6 @@ const main = async () => {
 
         if (
           group &&
-          group.applicationId === customApplicationId &&
           !unshippableFieldGroups.some(
             (existing) =>
               existing.universalIdentifier === group.universalIdentifier,
@@ -945,7 +1015,8 @@ const main = async () => {
             viewField.aggregateOperation,
             viewLabel,
           ),
-          viewFieldGroupUniversalIdentifier: group?.universalIdentifier,
+          // Deliberately not shipped — see the comment above.
+          viewFieldGroupUniversalIdentifier: undefined,
         };
 
         const fieldRow = fieldsById.get(viewField.fieldMetadataId);
@@ -974,10 +1045,9 @@ const main = async () => {
       );
 
       warn(
-        `${unshippableFieldGroups.length} record page section(s) sit on views this app does not own and cannot ship in the manifest. ` +
-          'They are listed in src/prerequisites/view-field-groups.json and must be created on the target instance ' +
-          '(createCoreViewFieldGroup, passing the same universalIdentifier) before installing, or the view fields that ' +
-          'reference them will not resolve.',
+        `${unshippableFieldGroups.length} record page section(s) sit on views this app does not own and cannot ship. ` +
+          'The affected view fields install fine but land ungrouped on the target. ' +
+          'They are listed in src/prerequisites/view-field-groups.json — see README for how to restore grouping.',
       );
     }
 
@@ -1200,7 +1270,24 @@ const main = async () => {
       [workspace.id],
     );
 
+    let emittedIndexCount = 0;
+
     for (const index of indexes) {
+      // The server resolves an index's object against the manifest's own
+      // objects, so an index on an object this app does not own cannot ship —
+      // it fails the install with "references unknown object". Skip and report.
+      if (!customObjectIds.has(index.objectMetadataId)) {
+        warn(
+          `Unique index on "${objectComment(index.objectMetadataId)}.${indexFields
+            .filter((indexField) => indexField.indexMetadataId === index.id)
+            .map((indexField) => fieldsById.get(indexField.fieldMetadataId)?.name)
+            .join(', ')}" cannot ship: the manifest can only declare indexes on objects it owns. ` +
+            'Recreate it by hand on the target if the uniqueness constraint matters there.',
+        );
+
+        continue;
+      }
+
       const fields = indexFields
         .filter((indexField) => indexField.indexMetadataId === index.id)
         .sort((left, right) => left.order - right.order)
@@ -1238,6 +1325,8 @@ const main = async () => {
         ),
         renderFile({ defineFunction: 'defineIndex', body: serialize(manifest) }),
       );
+
+      emittedIndexCount += 1;
     }
 
     // ----------------------------------------------------------------- report
@@ -1250,7 +1339,7 @@ const main = async () => {
     console.log(`  view fields on standard views  ${standaloneViewFieldCount}`);
     console.log(`  page layouts            ${pageLayouts.length}`);
     console.log(`  navigation menu items   ${navigationMenuItems.length}`);
-    console.log(`  custom indexes          ${indexes.length}`);
+    console.log(`  custom indexes          ${emittedIndexCount}`);
 
     if (warnings.length > 0) {
       console.log('');

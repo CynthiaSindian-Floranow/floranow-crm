@@ -209,24 +209,29 @@ Sections you added to a **standard** object's record page — Company, Opportuni
 — therefore cannot ship in the manifest. `model:pull` writes them to
 `src/prerequisites/view-field-groups.json` and warns.
 
-Create them once on prod through the core GraphQL API, passing the
-`universalIdentifier` from that file verbatim:
+They cannot be created with matching identifiers over the API either:
+`CreateViewFieldGroupInput` marks `universalIdentifier` as `@HideField()`, so it
+is not part of the GraphQL schema. Creating one through the API would give it a
+fresh identifier that the manifest does not reference.
 
-```graphql
-mutation {
-  createCoreViewFieldGroup(input: {
-    universalIdentifier: "<from view-field-groups.json>"
-    viewId: "<the prod id of that view>"
-    name: "Retention & Win-Back"
-    position: 9
-    isVisible: true
-  }) { id }
-}
-```
+So `model:pull` **drops the group reference** from the affected view fields
+rather than ship an identifier that will not resolve. The consequence is purely
+cosmetic: those fields install correctly but appear ungrouped on the target's
+record page instead of under their section heading.
 
-Because the identifier matches, every view field that references the section
-resolves, and later pulls stay stable. Skip this and those fields land on the
-record page ungrouped.
+The groups themselves are still recorded in
+`src/prerequisites/view-field-groups.json` so nothing is lost track of.
+
+**To restore grouping later** — a small change to this fork, worth doing only if
+the sections matter visually:
+
+1. Remove `@HideField()` from `universalIdentifier` in
+   `packages/twenty-server/src/engine/metadata-modules/view-field-group/dtos/inputs/create-view-field-group.input.ts`
+   and expose it as a normal nullable `@Field()`.
+2. Deploy that server change.
+3. Create the sections on the target with the identifiers from the JSON file.
+4. Re-enable the reference in `pull-model.ts` (the `viewFieldGroupUniversalIdentifier: undefined`
+   line, which is commented for this reason) and re-pull.
 
 ## Rules that keep this working
 

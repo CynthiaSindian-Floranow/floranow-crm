@@ -22,5 +22,13 @@
     "isVisible": true,
     "viewUniversalIdentifier": "20202020-a001-4a01-8a01-c0aba11c1001",
     "viewName": "company / Company Record Page Fields"
+  },
+  {
+    "universalIdentifier": "0676d8bd-d75b-4e37-a32c-f592bd85f691",
+    "name": "Onboarding Checklist",
+    "position": 8,
+    "isVisible": true,
+    "viewUniversalIdentifier": "20202020-a001-4a01-8a01-c0aba11c1001",
+    "viewName": "company / Company Record Page Fields"
   }
 ]

@@ -9,6 +9,5 @@ export default defineViewField({
   fieldMetadataUniversalIdentifier: "ee40828b-2dc8-48d2-986f-7ba48dd80be3",
   isVisible: true,
   size: 180,
-  position: 17,
-  viewFieldGroupUniversalIdentifier: "0676d8bd-d75b-4e37-a32c-f592bd85f691"
+  position: 17
 });

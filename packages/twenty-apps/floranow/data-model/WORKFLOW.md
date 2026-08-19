@@ -218,10 +218,13 @@ This is the real cost of snapshot-based syncing. Better known than discovered.
 - **Active/inactive state**, which the manifest cannot express. Anything
   deactivated in dev arrives active on prod; the pull warns when it sees one.
 - **Record page sections on standard objects.** There is no standalone
-  `defineViewFieldGroup`, so sections added to the Company and Opportunity record
-  pages cannot ship. `model:pull` writes them to
-  `src/prerequisites/view-field-groups.json`; create them once on prod with the
-  same `universalIdentifier`. See `README.md`.
+  `defineViewFieldGroup`, and `createCoreViewFieldGroup` hides
+  `universalIdentifier` from the GraphQL schema, so sections added to the Company
+  and Opportunity record pages cannot ship *and* cannot be recreated with
+  matching identifiers over the API. The affected view fields install fine but
+  land ungrouped. They are recorded in
+  `src/prerequisites/view-field-groups.json`; `README.md` describes the small
+  fork change that would restore grouping.
 
 ---
 
