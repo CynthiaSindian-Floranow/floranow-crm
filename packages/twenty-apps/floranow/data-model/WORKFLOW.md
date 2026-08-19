@@ -142,6 +142,7 @@ Nothing has changed yet — that is a preview. Then:
 ```bash
 yarn twenty app:publish --private --remote prod
 yarn twenty app:install  --remote prod
+yarn model:post-install --apply
 ```
 
 On prod the server runs `ALTER TABLE … ADD COLUMN "deliveryWindow" text` and
@@ -217,6 +218,10 @@ This is the real cost of snapshot-based syncing. Better known than discovered.
   indexes you created yourself are pulled.
 - **Active/inactive state**, which the manifest cannot express. Anything
   deactivated in dev arrives active on prod; the pull warns when it sees one.
+- **Renames of built-in objects and fields**, and **record page sections**.
+  Both live on entities the app does not own, so the manifest cannot carry them.
+  `yarn model:post-install` applies both from `src/prerequisites/`. Run it after
+  every install — it is idempotent.
 - **Record page sections on standard objects.** There is no standalone
   `defineViewFieldGroup`, and `createCoreViewFieldGroup` hides
   `universalIdentifier` from the GraphQL schema, so sections added to the Company

@@ -133,6 +133,7 @@ type ObjectRow = {
   isUIEditable: boolean;
   isActive: boolean;
   labelIdentifierFieldMetadataId: string | null;
+  standardOverrides: Record<string, unknown> | null;
 };
 
 type FieldRow = {
@@ -154,6 +155,7 @@ type FieldRow = {
   relationTargetFieldMetadataId: string | null;
   relationTargetObjectMetadataId: string | null;
   morphId: string | null;
+  standardOverrides: Record<string, unknown> | null;
 };
 
 type ViewRow = {
@@ -395,7 +397,8 @@ const main = async () => {
     const { rows: allObjects } = await client.query<ObjectRow>(
       `select id, "universalIdentifier", "applicationId", "nameSingular", "namePlural",
               "labelSingular", "labelPlural", description, icon, "isSearchable",
-              "isUICreatable", "isUIEditable", "isActive", "labelIdentifierFieldMetadataId"
+              "isUICreatable", "isUIEditable", "isActive", "labelIdentifierFieldMetadataId",
+              "standardOverrides"
        from core."objectMetadata" where "workspaceId" = $1`,
       [workspace.id],
     );
@@ -404,7 +407,7 @@ const main = async () => {
       `select id, "universalIdentifier", "applicationId", "objectMetadataId", type, name, label,
               description, icon, "defaultValue", options, settings, "isNullable",
               "isUIEditable", "isActive", "relationTargetFieldMetadataId",
-              "relationTargetObjectMetadataId", "morphId"
+              "relationTargetObjectMetadataId", "morphId", "standardOverrides"
        from core."fieldMetadata" where "workspaceId" = $1`,
       [workspace.id],
     );
@@ -1151,7 +1154,50 @@ const main = async () => {
 
       warn(
         `${groupCount} record page section(s) across ${sectionPlans.length} view(s) cannot ship in the manifest. ` +
-          'Apply them with `yarn model:sections` after installing — see README.',
+          'Apply them with `yarn model:post-install` after installing — see README.',
+      );
+    }
+
+    // Renaming a built-in object or field — Opportunity shown as "Lead", say —
+    // is stored as standardOverrides on the standard entity. The app does not
+    // own those entities so the manifest cannot carry the change; it is applied
+    // to the target afterwards through updateOneObject / updateOneField.
+    const overridePlans = [
+      ...allObjects
+        .filter((object) => object.standardOverrides !== null)
+        .map((object) => ({
+          kind: 'object' as const,
+          objectUniversalIdentifier: object.universalIdentifier,
+          objectName: object.nameSingular,
+          fieldUniversalIdentifier: undefined,
+          fieldName: undefined,
+          overrides: object.standardOverrides,
+        })),
+      ...allFields
+        .filter((field) => field.standardOverrides !== null)
+        .map((field) => ({
+          kind: 'field' as const,
+          objectUniversalIdentifier: objectUid(
+            field.objectMetadataId,
+            `field ${field.name}`,
+          ),
+          objectName: objectComment(field.objectMetadataId),
+          fieldUniversalIdentifier: field.universalIdentifier,
+          fieldName: field.name,
+          overrides: field.standardOverrides,
+        })),
+    ];
+
+    if (overridePlans.length > 0) {
+      writeFileSync(
+        join(SRC_DIR, 'prerequisites', 'standard-overrides.json'),
+        `${JSON.stringify(overridePlans, null, 2)}\n`,
+        'utf-8',
+      );
+
+      warn(
+        `${overridePlans.length} rename(s) of built-in objects or fields cannot ship in the manifest. ` +
+          'Apply them with `yarn model:post-install` — see README.',
       );
     }
 

@@ -20,7 +20,7 @@
     "model:check": "bash scripts/check-snapshot.sh",
     "model:verify": "tsx scripts/verify-target.ts",
     "typecheck": "tsc --noEmit",
-    "model:sections": "tsx scripts/apply-sections.ts"
+    "model:post-install": "tsx scripts/apply-post-install.ts"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

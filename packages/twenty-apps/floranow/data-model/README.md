@@ -168,6 +168,11 @@ yarn model:plan
 # 3. apply
 yarn twenty app:publish --private --remote prod
 yarn twenty app:install --remote prod
+
+# 4. apply what a manifest cannot carry (renames of built-in objects,
+#    record page sections). Dry run first, then --apply.
+yarn model:post-install
+yarn model:post-install --apply
 ```
 
 `model:pull` needs a **read-only** database user. It never writes to dev.

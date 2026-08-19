@@ -1,16 +1,18 @@
-// Rebuilds record page sections (view field groups) on a target instance.
+// Applies the parts of the model that a manifest cannot carry. Run it after
+// every `app:install`.
 //
-// Sections cannot travel in the manifest: there is no defineViewFieldGroup, and
-// createCoreViewFieldGroup hides universalIdentifier from the schema. But the
-// upsertFieldsWidget mutation accepts a caller-chosen group id along with the
-// fields that belong in each group, so the structure can be rebuilt exactly.
-//
-// Run it after `app:install`:
+//   1. Renames of built-in objects and fields — showing Opportunity as "Lead",
+//      for instance. These live as standardOverrides on entities the app does
+//      not own, so they are applied with updateOneObject / updateOneField.
+//   2. Record page sections. There is no defineViewFieldGroup, and
+//      createCoreViewFieldGroup hides universalIdentifier from the schema, but
+//      upsertFieldsWidget takes a caller-chosen group id plus the fields that
+//      belong in each group, so the structure can be rebuilt exactly.
 //
 //   TWENTY_TARGET_URL=https://crm.floranow.com \
 //   TWENTY_TARGET_API_KEY=... \
-//   yarn model:sections            # dry run — prints the plan
-//   yarn model:sections --apply
+//   yarn model:post-install            # dry run — prints the plan
+//   yarn model:post-install --apply
 //
 // Idempotent: group ids come from dev's identifiers, so re-running converges
 // rather than duplicating. Note that upsertFieldsWidget REPLACES every group on
@@ -89,6 +91,26 @@ const main = async () => {
     ),
   ) as SectionPlan[];
 
+  const overridePlans = (() => {
+    try {
+      return JSON.parse(
+        readFileSync(
+          join(__dirname, '..', 'src', 'prerequisites', 'standard-overrides.json'),
+          'utf-8',
+        ),
+      ) as {
+        kind: 'object' | 'field';
+        objectUniversalIdentifier: string;
+        objectName: string;
+        fieldUniversalIdentifier?: string;
+        fieldName?: string;
+        overrides: Record<string, unknown>;
+      }[];
+    } catch {
+      return [];
+    }
+  })();
+
   console.log(`Target: ${url}`);
   console.log(apply ? 'Mode:   APPLY\n' : 'Mode:   dry run\n');
 
@@ -145,6 +167,69 @@ const main = async () => {
     apiKey,
     query: `query { getViews { id type objectMetadataId } }`,
   });
+
+  // ---- 1. renames of built-in objects and fields
+
+  if (overridePlans.length > 0) {
+    console.log('Renames of built-in entities:');
+  }
+
+  for (const plan of overridePlans) {
+    const targetObject = objectByUid.get(plan.objectUniversalIdentifier);
+
+    if (!targetObject) {
+      console.log(`  SKIP ${plan.objectName}: not on target`);
+      continue;
+    }
+
+    const label =
+      plan.kind === 'object'
+        ? plan.objectName
+        : `${plan.objectName}.${plan.fieldName}`;
+
+    console.log(`  ${label} -> ${JSON.stringify(plan.overrides)}`);
+
+    if (!apply) {
+      continue;
+    }
+
+    if (plan.kind === 'object') {
+      await request({
+        url,
+        apiKey,
+        query: `mutation ($input: UpdateOneObjectInput!) {
+          updateOneObject(input: $input) { id }
+        }`,
+        variables: {
+          input: { id: targetObject.id, update: plan.overrides },
+        },
+      });
+    } else {
+      const fieldId = fieldIdByUid.get(plan.fieldUniversalIdentifier ?? '');
+
+      if (!fieldId) {
+        console.log(`  SKIP ${label}: field not on target`);
+        continue;
+      }
+
+      await request({
+        url,
+        apiKey,
+        query: `mutation ($input: UpdateOneFieldMetadataInput!) {
+          updateOneField(input: $input) { id }
+        }`,
+        variables: { input: { id: fieldId, update: plan.overrides } },
+      });
+    }
+  }
+
+  if (overridePlans.length > 0) {
+    console.log('');
+  }
+
+  // ---- 2. record page sections
+
+  console.log('Record page sections:');
 
   let applied = 0;
   let skipped = 0;
