@@ -34,6 +34,16 @@ type Manifest = {
   }[];
   fields: ManifestField[];
   views: { name: string; objectUniversalIdentifier: string }[];
+  pageLayouts: {
+    universalIdentifier: string;
+    name: string;
+    objectUniversalIdentifier?: string;
+    tabs?: {
+      universalIdentifier: string;
+      title: string;
+      widgets?: { universalIdentifier: string; title: string; type: string }[];
+    }[];
+  }[];
   viewFields: { universalIdentifier: string; viewUniversalIdentifier: string }[];
   navigationMenuItems: { universalIdentifier: string }[];
   indexes: { universalIdentifier: string }[];
@@ -277,10 +287,108 @@ const main = async () => {
     }
   }
 
+  // Page layouts, their tabs, and the widgets on each tab. This is what the
+  // record page actually renders, so a layout that installs without widgets
+  // looks like an empty page to the user.
+  const layoutData = await request<{
+    getPageLayouts: {
+      id: string;
+      name: string;
+      universalIdentifier: string;
+      objectMetadataId: string | null;
+    }[];
+  }>({
+    url,
+    apiKey,
+    endpoint: 'metadata',
+    query: `query { getPageLayouts { id name universalIdentifier objectMetadataId } }`,
+  });
+
+  const targetLayoutByUid = new Map(
+    layoutData.getPageLayouts.map((layout) => [
+      layout.universalIdentifier,
+      layout,
+    ]),
+  );
+
+  let checkedTabs = 0;
+  let checkedWidgets = 0;
+
+  for (const manifestLayout of manifest.pageLayouts ?? []) {
+    const targetLayout = targetLayoutByUid.get(
+      manifestLayout.universalIdentifier,
+    );
+
+    if (!targetLayout) {
+      problems.push(
+        `MISSING page layout "${manifestLayout.name}" (${manifestLayout.universalIdentifier})`,
+      );
+      continue;
+    }
+
+    const tabData = await request<{
+      getPageLayoutTabs: { id: string; title: string }[];
+    }>({
+      url,
+      apiKey,
+      endpoint: 'metadata',
+      // PageLayoutTab and PageLayoutWidget do not expose universalIdentifier
+      // over GraphQL, so tabs match on title and widgets on title + type.
+      query: `query { getPageLayoutTabs(pageLayoutId: "${targetLayout.id}") { id title } }`,
+    });
+
+    const targetTabByTitle = new Map(
+      tabData.getPageLayoutTabs.map((tab) => [tab.title, tab]),
+    );
+
+    for (const manifestTab of manifestLayout.tabs ?? []) {
+      checkedTabs += 1;
+
+      const targetTab = targetTabByTitle.get(manifestTab.title);
+
+      if (!targetTab) {
+        problems.push(
+          `MISSING tab "${manifestTab.title}" on layout "${manifestLayout.name}"`,
+        );
+        continue;
+      }
+
+      const widgetData = await request<{
+        getPageLayoutWidgets: { id: string; title: string; type: string }[];
+      }>({
+        url,
+        apiKey,
+        endpoint: 'metadata',
+        query: `query { getPageLayoutWidgets(pageLayoutTabId: "${targetTab.id}") { id title type } }`,
+      });
+
+      const targetWidgetKeys = new Set(
+        widgetData.getPageLayoutWidgets.map(
+          (widget) => `${widget.title}|${widget.type}`,
+        ),
+      );
+
+      for (const manifestWidget of manifestTab.widgets ?? []) {
+        checkedWidgets += 1;
+
+        if (
+          !targetWidgetKeys.has(`${manifestWidget.title}|${manifestWidget.type}`)
+        ) {
+          problems.push(
+            `MISSING widget "${manifestWidget.title}" (${manifestWidget.type}) on tab "${manifestTab.title}" of "${manifestLayout.name}"`,
+          );
+        }
+      }
+    }
+  }
+
   console.log(`objects checked        ${manifest.objects.length}`);
   console.log(`fields checked         ${checkedFields}`);
   console.log(`views checked          ${manifest.views.length}`);
   console.log(`morph fields skipped   ${skippedMorphFields}`);
+  console.log(`page layouts checked   ${(manifest.pageLayouts ?? []).length}`);
+  console.log(`  tabs                 ${checkedTabs}`);
+  console.log(`  widgets              ${checkedWidgets}`);
 
   // Things the app owns on the target that the manifest no longer describes.
   // Not a failure — the next install removes them — but worth surfacing.

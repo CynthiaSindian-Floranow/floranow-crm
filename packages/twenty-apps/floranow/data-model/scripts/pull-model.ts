@@ -690,7 +690,17 @@ const main = async () => {
       return byViewId;
     };
 
-    const viewFieldsByViewId = await queryViewChildren<{
+    // Two kinds of view field have to travel:
+    //
+    //  - ones this app owns, which is everything on the views it owns, and
+    //  - ones that *place an app-owned field* on somebody else's view, even
+    //    though the view field row itself belongs to the standard app.
+    //
+    // The second kind is what puts the custom Company fields on the Company
+    // record page. Filtering on view field ownership alone silently drops them
+    // and the target shows the fields nowhere.
+    type ViewFieldRow = {
+      viewId: string;
       universalIdentifier: string;
       fieldMetadataId: string;
       isVisible: boolean;
@@ -698,10 +708,26 @@ const main = async () => {
       position: number;
       aggregateOperation: string | null;
       viewFieldGroupId: string | null;
-    }>(
-      'viewField',
-      '"universalIdentifier", "fieldMetadataId", "isVisible", size, position, "aggregateOperation", "viewFieldGroupId"',
+    };
+
+    const { rows: viewFieldRows } = await client.query<ViewFieldRow>(
+      `select vf."viewId", vf."universalIdentifier", vf."fieldMetadataId", vf."isVisible",
+              vf.size, vf.position, vf."aggregateOperation", vf."viewFieldGroupId"
+       from core."viewField" vf
+       join core."fieldMetadata" f on f.id = vf."fieldMetadataId"
+       where vf."workspaceId" = $1 and vf."deletedAt" is null
+         and (vf."applicationId" = $2 or f."applicationId" = $2)`,
+      [workspace.id, customApplicationId],
     );
+
+    const viewFieldsByViewId = new Map<string, ViewFieldRow[]>();
+
+    for (const row of viewFieldRows) {
+      const bucket = viewFieldsByViewId.get(row.viewId) ?? [];
+
+      bucket.push(row);
+      viewFieldsByViewId.set(row.viewId, bucket);
+    }
 
     const viewFilterGroupsByViewId = await queryViewChildren<{
       id: string;
@@ -780,6 +806,34 @@ const main = async () => {
        from core."viewFieldGroup" where "workspaceId" = $1 and "deletedAt" is null`,
       [workspace.id],
     );
+
+    // Every view field of every view, regardless of ownership. Needed to
+    // rebuild complete section structures: upsertFieldsWidget replaces all
+    // groups on a widget, so each group must list all of its fields.
+    const { rows: allViewFieldRows } = await client.query<{
+      id: string;
+      viewId: string;
+      fieldMetadataId: string;
+      isVisible: boolean;
+      position: number;
+      viewFieldGroupId: string | null;
+    }>(
+      `select id, "viewId", "fieldMetadataId", "isVisible", position, "viewFieldGroupId"
+       from core."viewField" where "workspaceId" = $1 and "deletedAt" is null`,
+      [workspace.id],
+    );
+
+    const allViewFieldRowsByViewId = new Map<
+      string,
+      typeof allViewFieldRows
+    >();
+
+    for (const row of allViewFieldRows) {
+      const bucket = allViewFieldRowsByViewId.get(row.viewId) ?? [];
+
+      bucket.push(row);
+      allViewFieldRowsByViewId.set(row.viewId, bucket);
+    }
 
     const allViewsById = new Map(allViews.map((view) => [view.id, view]));
     const allViewFieldGroupsById = new Map(
@@ -1037,21 +1091,151 @@ const main = async () => {
       }
     }
 
-    if (unshippableFieldGroups.length > 0) {
+    // The sections themselves cannot ship in the manifest, but they can be
+    // rebuilt on a target with the upsertFieldsWidget mutation, which accepts a
+    // caller-chosen group id and the fields that belong in each group. Emit the
+    // COMPLETE section structure of every affected view — that mutation
+    // replaces all groups on a widget, so a partial list would delete the rest.
+    const sectionPlans = allViews
+      .filter((view) => !customViewIds.has(view.id))
+      .map((view) => {
+        const groups = allViewFieldGroups
+          .filter((group) => group.viewId === view.id)
+          .sort((left, right) => left.position - right.position);
+
+        if (groups.length === 0) {
+          return null;
+        }
+
+        const viewFields = allViewFieldRowsByViewId.get(view.id) ?? [];
+
+        return {
+          objectUniversalIdentifier: objectUid(
+            view.objectMetadataId,
+            `view "${view.name}"`,
+          ),
+          objectName: objectComment(view.objectMetadataId),
+          viewName: view.name,
+          groups: groups.map((group) => ({
+            id: group.universalIdentifier,
+            name: group.name ?? '',
+            position: group.position,
+            isVisible: group.isVisible,
+            fields: viewFields
+              .filter((viewField) => viewField.viewFieldGroupId === group.id)
+              .sort((left, right) => left.position - right.position)
+              .map((viewField) => ({
+                fieldUniversalIdentifier: fieldUid(
+                  viewField.fieldMetadataId,
+                  `view "${view.name}"`,
+                ),
+                isVisible: viewField.isVisible,
+                position: viewField.position,
+              })),
+          })),
+        };
+      })
+      .filter((plan): plan is NonNullable<typeof plan> => plan !== null);
+
+    if (sectionPlans.length > 0) {
       writeFileSync(
         join(SRC_DIR, 'prerequisites', 'view-field-groups.json'),
-        `${JSON.stringify(unshippableFieldGroups, null, 2)}\n`,
+        `${JSON.stringify(sectionPlans, null, 2)}\n`,
         'utf-8',
       );
 
+      const groupCount = sectionPlans.reduce(
+        (total, plan) => total + plan.groups.length,
+        0,
+      );
+
       warn(
-        `${unshippableFieldGroups.length} record page section(s) sit on views this app does not own and cannot ship. ` +
-          'The affected view fields install fine but land ungrouped on the target. ' +
-          'They are listed in src/prerequisites/view-field-groups.json — see README for how to restore grouping.',
+        `${groupCount} record page section(s) across ${sectionPlans.length} view(s) cannot ship in the manifest. ` +
+          'Apply them with `yarn model:sections` after installing — see README.',
       );
     }
 
     // ----------------------------------------------------------- page layouts
+
+    // Widget configurations store raw per-instance ids. The manifest wants the
+    // portable form instead — `viewId` becomes `viewUniversalIdentifier` and so
+    // on, per FormatRecordSerializedRelationProperties in twenty-shared. Ship
+    // the raw ids and every widget would point at rows that do not exist on the
+    // target.
+    const SERIALIZED_RELATION_KEYS: Record<string, 'view' | 'field'> = {
+      viewId: 'view',
+      fieldMetadataId: 'field',
+      relationTargetFieldMetadataId: 'field',
+      aggregateFieldMetadataId: 'field',
+      groupByFieldMetadataId: 'field',
+      primaryAxisGroupByFieldMetadataId: 'field',
+      secondaryAxisGroupByFieldMetadataId: 'field',
+    };
+
+    // FieldConfiguration is the exception: its `fieldMetadataId` and `viewId`
+    // are plain strings rather than SerializedRelation, so the manifest has no
+    // portable form for them. Such a widget can only carry a raw id that will
+    // not exist on the target, so it is skipped instead.
+    const isPortableWidgetConfiguration = (configuration: unknown) =>
+      !(
+        configuration !== null &&
+        typeof configuration === 'object' &&
+        (configuration as Record<string, unknown>).configurationType === 'FIELD'
+      );
+
+    const allViewUidById = new Map(
+      allViews.map((view) => [view.id, view.universalIdentifier]),
+    );
+
+    const toUniversalConfiguration = (
+      configuration: unknown,
+      context: string,
+    ): unknown => {
+      if (Array.isArray(configuration)) {
+        return configuration.map((entry) =>
+          toUniversalConfiguration(entry, context),
+        );
+      }
+
+      if (configuration === null || typeof configuration !== 'object') {
+        return configuration;
+      }
+
+      const result: Record<string, unknown> = {};
+
+      for (const [key, value] of Object.entries(
+        configuration as Record<string, unknown>,
+      )) {
+        // GraphQL bookkeeping that has no business in a manifest.
+        if (key === '__typename') {
+          continue;
+        }
+
+        const relationKind = SERIALIZED_RELATION_KEYS[key];
+
+        if (!relationKind || typeof value !== 'string') {
+          result[key] = toUniversalConfiguration(value, context);
+          continue;
+        }
+
+        const resolved =
+          relationKind === 'view'
+            ? allViewUidById.get(value)
+            : fieldsById.get(value)?.universalIdentifier;
+
+        if (!resolved) {
+          warn(
+            `${context}: configuration.${key} points at ${value}, which is not a known ${relationKind}. Dropped so it cannot dangle on the target.`,
+          );
+
+          continue;
+        }
+
+        result[`${key.replace(/Id$/, '')}UniversalIdentifier`] = resolved;
+      }
+
+      return result;
+    };
 
     const { rows: pageLayouts } = await client.query<{
       id: string;
@@ -1064,8 +1248,9 @@ const main = async () => {
       `select id, "universalIdentifier", name, type, "objectMetadataId",
               "defaultTabToFocusOnMobileAndSidePanelId"
        from core."pageLayout"
-       where "workspaceId" = $1 and "applicationId" = $2 and "deletedAt" is null`,
-      [workspace.id, customApplicationId],
+       where "workspaceId" = $1 and "deletedAt" is null
+         and ("applicationId" = $2 or "objectMetadataId" = any($3::uuid[]))`,
+      [workspace.id, customApplicationId, [...customObjectIds]],
     );
 
     const { rows: pageLayoutTabs } = await client.query<{
@@ -1079,8 +1264,9 @@ const main = async () => {
     }>(
       `select id, "universalIdentifier", "pageLayoutId", title, position, icon, "layoutMode"
        from core."pageLayoutTab"
-       where "workspaceId" = $1 and "applicationId" = $2 and "deletedAt" is null`,
-      [workspace.id, customApplicationId],
+       where "workspaceId" = $1 and "deletedAt" is null
+         and "pageLayoutId" = any($2::uuid[])`,
+      [workspace.id, pageLayouts.map((layout) => layout.id)],
     );
 
     const { rows: pageLayoutWidgets } = await client.query<{
@@ -1096,8 +1282,9 @@ const main = async () => {
       `select "universalIdentifier", "pageLayoutTabId", title, type, "objectMetadataId",
               "gridPosition", configuration, "conditionalDisplay"
        from core."pageLayoutWidget"
-       where "workspaceId" = $1 and "applicationId" = $2 and "deletedAt" is null`,
-      [workspace.id, customApplicationId],
+       where "workspaceId" = $1 and "deletedAt" is null
+         and "pageLayoutTabId" = any($2::uuid[])`,
+      [workspace.id, pageLayoutTabs.map((tab) => tab.id)],
     );
 
     const tabUidById = new Map(
@@ -1111,6 +1298,17 @@ const main = async () => {
         .map((tab) => {
           const widgets = pageLayoutWidgets
             .filter((widget) => widget.pageLayoutTabId === tab.id)
+            .filter((widget) => {
+              if (isPortableWidgetConfiguration(widget.configuration)) {
+                return true;
+              }
+
+              warn(
+                `Widget "${widget.title}" on tab "${tab.title}" pins a specific field by raw id, which the manifest cannot express portably. It is skipped, so the target's record page will not show that pinned widget.`,
+              );
+
+              return false;
+            })
             .map((widget) => ({
               universalIdentifier: widget.universalIdentifier,
               title: widget.title,
@@ -1121,7 +1319,10 @@ const main = async () => {
               ),
               gridPosition: widget.gridPosition ?? undefined,
               conditionalDisplay: widget.conditionalDisplay ?? undefined,
-              configuration: widget.configuration ?? {},
+              configuration: toUniversalConfiguration(
+                widget.configuration,
+                `widget "${widget.title}"`,
+              ),
             }));
 
           return {
