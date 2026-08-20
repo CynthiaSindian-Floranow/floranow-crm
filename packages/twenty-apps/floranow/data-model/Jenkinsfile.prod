@@ -1,0 +1,164 @@
+// MAIN BRANCH — deploys the data model to prod.
+//
+// STATUS: NOT WIRED UP AND NOT TESTED. No Jenkins job points at this file yet;
+// deployments are currently run by hand with `yarn model:deploy prod`. Before
+// anyone creates a job from it, two things must be added, both of which the
+// manual path already handles:
+//
+//   1. a version bump before app:publish — publish refuses to overwrite an
+//      existing version, and an install with no new version silently reuses
+//      the previous package while still reporting success;
+//   2. a `yarn model:post-install --apply` step after install, for the parts
+//      the manifest cannot carry (renames of built-in objects, record page
+//      sections).
+//
+// The simplest correct fix is to replace the Build/Plan/Apply stages below with
+// a single `yarn model:deploy prod`, which does all of it in the right order.
+//
+// This job deliberately does NOT pull from the dev database. It deploys exactly
+// the snapshot that was reviewed and merged into main. Re-pulling here would
+// ship whatever happens to be in dev at this moment, bypassing review.
+//
+// ORDERING: run this AFTER the server code deploy of the same commit. The
+// install talks to the running prod server, so the server must be up and on a
+// version compatible with the app's declared `twenty-sdk`. Either append these
+// stages to the end of the existing prod pipeline, or trigger this as a
+// downstream job on its success.
+//
+// Credentials:
+//   twenty-prod-url       secret text — https://crm.example.com
+//   twenty-prod-api-key   secret text — API key of a workspace admin
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  parameters {
+    booleanParam(
+      name: 'ALLOW_DESTRUCTIVE',
+      defaultValue: false,
+      description: 'Allow the deploy to proceed when the plan deletes metadata. Deleting a field drops its column and every value in it on prod, permanently.'
+    )
+    booleanParam(
+      name: 'PLAN_ONLY',
+      defaultValue: false,
+      description: 'Print the plan and stop without applying anything.'
+    )
+  }
+
+  environment {
+    APP_DIR = 'packages/twenty-apps/floranow/data-model'
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        dir(env.APP_DIR) {
+          sh '''
+            corepack enable
+            yarn install --immutable
+          '''
+        }
+      }
+    }
+
+    stage('Configure prod remote') {
+      steps {
+        withCredentials([
+          string(credentialsId: 'twenty-prod-url', variable: 'TWENTY_URL'),
+          string(credentialsId: 'twenty-prod-api-key', variable: 'TWENTY_API_KEY')
+        ]) {
+          sh '''
+            mkdir -p ~/.twenty
+            node -e "
+              const fs = require('fs'), path = require('path'), os = require('os');
+              fs.writeFileSync(path.join(os.homedir(), '.twenty', 'config.json'), JSON.stringify({
+                version: 1,
+                remotes: { prod: { apiUrl: process.env.TWENTY_URL, apiKey: process.env.TWENTY_API_KEY } }
+              }, null, 2));
+            "
+          '''
+        }
+      }
+    }
+
+    stage('Build') {
+      steps {
+        dir(env.APP_DIR) {
+          sh 'yarn twenty dev:build .'
+        }
+      }
+    }
+
+    stage('Plan') {
+      steps {
+        dir(env.APP_DIR) {
+          sh 'yarn twenty dev --once --dry-run --remote prod 2>&1 | tee plan.txt'
+        }
+      }
+    }
+
+    stage('Gate on deletions') {
+      steps {
+        dir(env.APP_DIR) {
+          script {
+            // The CLI prints e.g. "Metadata changes: 3 created, 1 updated, 2 deleted"
+            def plan = sh(
+              script: "sed 's/\\x1b\\[[0-9;]*m//g' plan.txt",
+              returnStdout: true
+            )
+
+            def summary = plan.readLines().find { it.contains('Metadata changes:') }
+
+            if (summary == null) {
+              echo 'No metadata changes in this deploy.'
+              return
+            }
+
+            echo "Plan: ${summary.trim()}"
+
+            if (summary =~ /\d+ deleted/) {
+              def deletions = plan.readLines().findAll { it.trim().startsWith('deleted ') }
+
+              echo "This deploy DELETES metadata:\n${deletions.join('\n')}"
+
+              if (!params.ALLOW_DESTRUCTIVE) {
+                error(
+                  'Plan deletes metadata and ALLOW_DESTRUCTIVE is false. ' +
+                  'Deleting a field drops its column and every value in it on prod. ' +
+                  'Review the list above, take a database backup, then re-run with ALLOW_DESTRUCTIVE checked.'
+                )
+              }
+
+              echo 'ALLOW_DESTRUCTIVE is set — proceeding with deletions.'
+            }
+          }
+        }
+      }
+    }
+
+    stage('Apply') {
+      when {
+        expression { return !params.PLAN_ONLY }
+      }
+      steps {
+        dir(env.APP_DIR) {
+          sh '''
+            yarn twenty app:publish --private --remote prod
+            yarn twenty app:install --remote prod
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: "${env.APP_DIR}/plan.txt", allowEmptyArchive: true
+    }
+  }
+}

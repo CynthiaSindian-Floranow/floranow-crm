@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "object",
+    "objectUniversalIdentifier": "20202020-9549-49dd-b2b2-883999db8938",
+    "objectName": "opportunity",
+    "overrides": {
+      "icon": "IconTargetArrow",
+      "labelPlural": "Leads",
+      "labelSingular": "Lead"
+    }
+  }
+]

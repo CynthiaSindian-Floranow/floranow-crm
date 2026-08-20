@@ -1,0 +1,13 @@
+# dependencies
+/node_modules
+.yarn
+
+# build output
+/dist/
+.twenty
+
+# env files — never commit database URLs or API keys
+.env*
+
+# typescript
+*.tsbuildinfo
