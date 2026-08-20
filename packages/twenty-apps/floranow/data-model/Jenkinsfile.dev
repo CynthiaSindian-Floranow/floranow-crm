@@ -1,0 +1,70 @@
+// DEV BRANCH — validation only. Needs NO credentials and touches no instance.
+//
+// The hosted dev instance is where the data model is authored by hand, so its
+// objects belong to dev's own "Custom" application. This app must never be
+// installed there: it would collide with them and force a wipe of the very
+// workspace you design in.
+//
+// All this job does is prove that the snapshot committed on the dev branch
+// still compiles into a valid manifest. That is enough to stop a broken model
+// from ever reaching main.
+//
+// The stronger check — "does the snapshot still match the dev workspace?" —
+// runs on the developer's machine via the pre-push hook, because it needs to
+// read the dev database. If DevOps later confirms the Jenkins agent can reach
+// floranow-dev2 on 5432, flip ENABLE_DRIFT_CHECK below to turn it on here too.
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  environment {
+    APP_DIR = 'packages/twenty-apps/floranow/data-model'
+
+    // Set to 'true' once a read-only dev database credential exists in Jenkins
+    // under the id 'twenty-dev-database-url'.
+    ENABLE_DRIFT_CHECK = 'false'
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        dir(env.APP_DIR) {
+          sh '''
+            corepack enable
+            yarn install --immutable
+          '''
+        }
+      }
+    }
+
+    stage('Build') {
+      steps {
+        dir(env.APP_DIR) {
+          // Builds the manifest and runs typecheck. Fails on a dangling
+          // identifier, a bad enum value, or a hand-edited generated file.
+          sh 'yarn twenty dev:build .'
+        }
+      }
+    }
+
+    stage('Snapshot matches dev') {
+      when {
+        expression { return env.ENABLE_DRIFT_CHECK == 'true' }
+      }
+      steps {
+        withCredentials([
+          string(credentialsId: 'twenty-dev-database-url', variable: 'TWENTY_DEV_DATABASE_URL')
+        ]) {
+          dir(env.APP_DIR) {
+            sh 'bash scripts/check-snapshot.sh'
+          }
+        }
+      }
+    }
+  }
+}
