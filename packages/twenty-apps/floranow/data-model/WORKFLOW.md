@@ -140,10 +140,13 @@ Metadata changes: 2 created
 Nothing has changed yet — that is a preview. Then:
 
 ```bash
-yarn twenty app:publish --private --remote prod
-yarn twenty app:install  --remote prod
-yarn model:post-install --apply
+yarn model:deploy prod
 ```
+
+`model:deploy` bumps the version, builds, publishes, installs, applies the
+post-install steps and verifies the result. The version bump matters: publish
+refuses to overwrite an existing version, and an install that finds no new
+version silently reuses the previous package.
 
 On prod the server runs `ALTER TABLE … ADD COLUMN "deliveryWindow" text` and
 inserts one `viewField` row. **Every existing prod visit keeps its data** and

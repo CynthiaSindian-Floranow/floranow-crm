@@ -1,6 +1,6 @@
 {
   "name": "floranow-data-model",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "license": "UNLICENSED",
   "engines": {
@@ -20,7 +20,8 @@
     "model:check": "bash scripts/check-snapshot.sh",
     "model:verify": "tsx scripts/verify-target.ts",
     "typecheck": "tsc --noEmit",
-    "model:post-install": "tsx scripts/apply-post-install.ts"
+    "model:post-install": "tsx scripts/apply-post-install.ts",
+    "model:deploy": "bash scripts/deploy.sh"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

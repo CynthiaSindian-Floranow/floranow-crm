@@ -1,5 +1,20 @@
 // MAIN BRANCH — deploys the data model to prod.
 //
+// STATUS: NOT WIRED UP AND NOT TESTED. No Jenkins job points at this file yet;
+// deployments are currently run by hand with `yarn model:deploy prod`. Before
+// anyone creates a job from it, two things must be added, both of which the
+// manual path already handles:
+//
+//   1. a version bump before app:publish — publish refuses to overwrite an
+//      existing version, and an install with no new version silently reuses
+//      the previous package while still reporting success;
+//   2. a `yarn model:post-install --apply` step after install, for the parts
+//      the manifest cannot carry (renames of built-in objects, record page
+//      sections).
+//
+// The simplest correct fix is to replace the Build/Plan/Apply stages below with
+// a single `yarn model:deploy prod`, which does all of it in the right order.
+//
 // This job deliberately does NOT pull from the dev database. It deploys exactly
 // the snapshot that was reviewed and merged into main. Re-pulling here would
 // ship whatever happens to be in dev at this moment, bypassing review.

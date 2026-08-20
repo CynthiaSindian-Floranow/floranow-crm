@@ -165,14 +165,9 @@ TWENTY_DEV_DATABASE_URL=postgres://twenty_model_reader:...@dev-host:5432/default
 yarn twenty remote:use prod
 yarn model:plan
 
-# 3. apply
-yarn twenty app:publish --private --remote prod
-yarn twenty app:install --remote prod
-
-# 4. apply what a manifest cannot carry (renames of built-in objects,
-#    record page sections). Dry run first, then --apply.
-yarn model:post-install
-yarn model:post-install --apply
+# 3. deploy — bumps the version, builds, publishes, installs, applies the
+#    post-install steps and verifies, in that order
+yarn model:deploy prod
 ```
 
 `model:pull` needs a **read-only** database user. It never writes to dev.
