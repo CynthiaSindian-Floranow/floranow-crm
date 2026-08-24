@@ -3,12 +3,16 @@ import { type RecordExportTemplate } from '@/object-record/record-index/export/t
 import { generateCsvFromTemplate } from '@/object-record/record-index/export/utils/generateCsvFromTemplate';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 
-const EXPECTED_HEADER =
+const LEAD_ID = '11111111-1111-4111-8111-111111111111';
+
+const MARKETPLACE_HEADER =
   'email,customerType,currency,name,businessName,phoneNumber,segmentId,salesChannelId,country,city,state';
+
+const EXPECTED_HEADER = `${MARKETPLACE_HEADER},leadId,debtorNumber`;
 
 const buildLead = (overrides: Partial<ObjectRecord> = {}): ObjectRecord =>
   ({
-    id: '11111111-1111-4111-8111-111111111111',
+    id: LEAD_ID,
     name: 'Rose Flowers',
     businessName: 'Rose Flowers LLC',
     customerType: 'RETAIL',
@@ -42,6 +46,27 @@ describe('generateCsvFromTemplate', () => {
     expect(lines[0]).toBe(EXPECTED_HEADER);
   });
 
+  it('should keep the marketplace columns first and unchanged, with the round-trip pair appended', () => {
+    const headers = generate([buildLead()]).split('\n')[0].split(',');
+
+    expect(headers.slice(0, 11).join(',')).toBe(MARKETPLACE_HEADER);
+    expect(headers.slice(11)).toEqual(['leadId', 'debtorNumber']);
+  });
+
+  it('should export the lead id so the file can be matched on the way back', () => {
+    const [header, row] = generate([buildLead()]).split('\n');
+    const values = row.split(',');
+
+    expect(values[header.split(',').indexOf('leadId')]).toBe(LEAD_ID);
+  });
+
+  it('should leave debtorNumber empty on export for the operator to fill in', () => {
+    const [header, row] = generate([buildLead()]).split('\n');
+    const values = row.split(',');
+
+    expect(values[header.split(',').indexOf('debtorNumber')]).toBe('');
+  });
+
   it('should not prefix the output with a byte order mark', () => {
     expect(generate([buildLead()]).charCodeAt(0)).not.toBe(0xfeff);
   });
@@ -50,7 +75,7 @@ describe('generateCsvFromTemplate', () => {
     const lines = generate([buildLead()]).split('\n');
 
     expect(lines[1]).toBe(
-      'a@x.ae,RETAIL,AED,Rose Flowers,Rose Flowers LLC,+971501234567,,,AE,AE-DXB,AE-DU',
+      `a@x.ae,RETAIL,AED,Rose Flowers,Rose Flowers LLC,+971501234567,,,AE,AE-DXB,AE-DU,${LEAD_ID},`,
     );
   });
 
@@ -67,7 +92,7 @@ describe('generateCsvFromTemplate', () => {
     const lines = generate([buildLead({ pointOfContact: null })]).split('\n');
 
     expect(lines[1]).toBe(
-      ',RETAIL,AED,Rose Flowers,Rose Flowers LLC,,,,AE,AE-DXB,AE-DU',
+      `,RETAIL,AED,Rose Flowers,Rose Flowers LLC,,,,AE,AE-DXB,AE-DU,${LEAD_ID},`,
     );
     expect(lines[1]).not.toContain('undefined');
   });
@@ -146,7 +171,9 @@ describe('generateCsvFromTemplate', () => {
 
     const lines = generate([lead]).split('\n');
 
-    expect(lines[1]).toBe('a@x.ae,RETAIL,,Rose Flowers,,+971501234567,,,,,');
+    expect(lines[1]).toBe(
+      `a@x.ae,RETAIL,,Rose Flowers,,+971501234567,,,,,,${LEAD_ID},`,
+    );
   });
 
   it('should quote values containing commas, quotes or newlines', () => {
