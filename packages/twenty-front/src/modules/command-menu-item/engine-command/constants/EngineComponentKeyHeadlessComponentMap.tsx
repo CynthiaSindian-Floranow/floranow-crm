@@ -7,6 +7,7 @@ import { ComposeEmailCommand } from '@/command-menu-item/engine-command/global/c
 import { DeleteRecordsCommand } from '@/command-menu-item/engine-command/record/components/DeleteRecordsCommand';
 import { DestroyRecordsCommand } from '@/command-menu-item/engine-command/record/components/DestroyRecordsCommand';
 import { ExportLeadsForRegistrationCommand } from '@/command-menu-item/engine-command/record/components/ExportLeadsForRegistrationCommand';
+import { ImportLeadsAfterRegistrationCommand } from '@/command-menu-item/engine-command/record/components/ImportLeadsAfterRegistrationCommand';
 import { ExportRecordsCommand } from '@/command-menu-item/engine-command/record/components/ExportRecordsCommand';
 import { RestoreRecordsCommand } from '@/command-menu-item/engine-command/record/components/RestoreRecordsCommand';
 import { TriggerWorkflowVersionEngineCommand } from '@/command-menu-item/engine-command/record/components/TriggerWorkflowVersionEngineCommand';
@@ -117,6 +118,9 @@ export const ENGINE_COMPONENT_KEY_COMPONENT_MAP: Record<
   [EngineComponentKey.EXPORT_VIEW]: <ExportRecordsCommand />,
   [EngineComponentKey.EXPORT_LEADS_FOR_REGISTRATION]: (
     <ExportLeadsForRegistrationCommand />
+  ),
+  [EngineComponentKey.IMPORT_LEADS_AFTER_REGISTRATION]: (
+    <ImportLeadsAfterRegistrationCommand />
   ),
   [EngineComponentKey.SEE_DELETED_RECORDS]: (
     <SeeDeletedRecordsNoSelectionRecordCommand />

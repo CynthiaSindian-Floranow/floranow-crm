@@ -41,5 +41,11 @@ export const LEAD_REGISTRATION_EXPORT_TEMPLATE: RecordExportTemplate = {
     { header: 'country', getValue: (record) => record.country },
     { header: 'city', getValue: (record) => record.city },
     { header: 'state', getValue: (record) => record.state },
+    // Appended after the marketplace's own columns so the first eleven stay
+    // byte-identical to customers-template.csv. These two carry the round trip:
+    // leadId identifies the record on the way back, and debtorNumber is the
+    // empty cell the operator fills in once the customer is registered.
+    { header: 'leadId', getValue: (record) => record.id },
+    { header: 'debtorNumber' },
   ],
 };

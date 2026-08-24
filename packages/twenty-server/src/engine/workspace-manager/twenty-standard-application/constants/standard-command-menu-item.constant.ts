@@ -231,6 +231,23 @@ export const STANDARD_COMMAND_MENU_ITEMS = {
     engineComponentKey: EngineComponentKey.EXPORT_LEADS_FOR_REGISTRATION,
     hotKeys: null,
   },
+  importLeadsAfterRegistration: {
+    universalIdentifier: 'c8e4d1b6-2f93-4a57-8b0e-71d5c6a3f284',
+    label: 'Import after Registration',
+    icon: 'IconFileImport',
+    isPinned: false,
+    // Sits next to Import Leads and Export for Registration in the menu.
+    position: 14,
+    shortLabel: 'Registration',
+    availabilityType: CommandMenuItemAvailabilityType.GLOBAL_OBJECT_CONTEXT,
+    conditionalAvailabilityExpression:
+      'pageType == "INDEX_PAGE" and permissionFlags.IMPORT_CSV',
+    availabilityObjectMetadataUniversalIdentifier:
+      STANDARD_OBJECTS.opportunity.universalIdentifier,
+    frontComponentUniversalIdentifier: null,
+    engineComponentKey: EngineComponentKey.IMPORT_LEADS_AFTER_REGISTRATION,
+    hotKeys: null,
+  },
   seeDeletedRecords: {
     universalIdentifier: 'd63c21c3-9785-4750-be87-5f36269b8e0d',
     label: 'See deleted ${capitalize(objectMetadataItem.labelPlural)}',
