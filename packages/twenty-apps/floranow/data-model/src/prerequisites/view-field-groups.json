@@ -827,6 +827,31 @@
             "fieldUniversalIdentifier": "3c8a6095-3f64-4e81-a59e-66c2bd181e11",
             "isVisible": false,
             "position": 3
+          },
+          {
+            "fieldUniversalIdentifier": "a15a5193-ec1a-499f-a5c0-2738525c7f83",
+            "isVisible": true,
+            "position": 4
+          },
+          {
+            "fieldUniversalIdentifier": "6cbaf470-a3c2-4970-a43a-3e5f98998f0e",
+            "isVisible": true,
+            "position": 5
+          },
+          {
+            "fieldUniversalIdentifier": "deba79a0-ac03-43bc-b2de-8277cd86a68f",
+            "isVisible": true,
+            "position": 6
+          },
+          {
+            "fieldUniversalIdentifier": "cec3f48e-5f34-4287-a528-56c6e0c75f21",
+            "isVisible": true,
+            "position": 7
+          },
+          {
+            "fieldUniversalIdentifier": "66a258f9-e776-43d4-9006-f3e821f2b9f0",
+            "isVisible": true,
+            "position": 8
           }
         ]
       },
