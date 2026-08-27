@@ -38051,6 +38051,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"iso-3166-2@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "iso-3166-2@npm:1.0.0"
+  checksum: 10c0/3b8e46c4a74c2685c1549f00cd23da9bf3752de6e651146116af0f9230b388e44c21eaf37ecfee6a4d9b052a99607b61bcfbd33835593939cdd61130e8c3bffc
+  languageName: node
+  linkType: hard
+
 "isobject@npm:^3.0.1":
   version: 3.0.1
   resolution: "isobject@npm:3.0.1"
@@ -53512,6 +53519,7 @@ __metadata:
     idb-keyval: "npm:^6.2.5"
     immer: "npm:^10.1.1"
     input-otp: "npm:^1.4.2"
+    iso-3166-2: "npm:^1.0.0"
     jest: "npm:29.7.0"
     jest-environment-jsdom: "npm:30.0.0-beta.3"
     jest-fetch-mock: "npm:^3.0.3"
