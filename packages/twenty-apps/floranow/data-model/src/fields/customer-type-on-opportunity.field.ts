@@ -13,31 +13,31 @@ export default defineField({
   isNullable: true,
   options: [
     {
+      id: "bde018d2-beca-4adc-8818-73fb1020da3f",
+      color: "blue",
+      label: "Reseller",
+      value: "RESELLER",
+      position: 0
+    },
+    {
       id: "2e831723-45d8-4581-b859-133f72644e3b",
       color: "green",
       label: "Retail",
       value: "RETAIL",
-      position: 0
-    },
-    {
-      id: "7cf12d57-394c-415c-9883-a73747b88374",
-      color: "sky",
-      label: "E-Tailer",
-      value: "E_TAILER",
       position: 1
     },
     {
-      id: "4219b14a-3ab7-4789-bc83-c0db3814d1b0",
-      color: "pink",
-      label: "Wedding & Events",
-      value: "WEDDING_EVENTS",
+      id: "d4ff314f-7e82-4e8b-a06c-0e71f1d0bb2f",
+      color: "orange",
+      label: "FOB",
+      value: "FOB",
       position: 2
     },
     {
-      id: "c24dfb85-561d-4925-b9f8-168c687081e4",
+      id: "d3f7df38-1f99-44d9-861f-afdef0a62115",
       color: "purple",
-      label: "Wholesaler",
-      value: "WHOLESALER",
+      label: "CIF",
+      value: "CIF",
       position: 3
     }
   ]

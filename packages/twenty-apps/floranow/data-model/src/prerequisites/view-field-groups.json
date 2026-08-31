@@ -857,6 +857,21 @@
             "fieldUniversalIdentifier": "0d7d96ad-f4d0-4272-8fe9-57e777faa1d0",
             "isVisible": true,
             "position": 9
+          },
+          {
+            "fieldUniversalIdentifier": "34a23bf7-1e17-4518-aea9-9b75805d7b5e",
+            "isVisible": true,
+            "position": 10
+          },
+          {
+            "fieldUniversalIdentifier": "6e051351-b14e-40e0-92fb-008e947d02e7",
+            "isVisible": true,
+            "position": 11
+          },
+          {
+            "fieldUniversalIdentifier": "41148a43-6f17-43f2-a792-22ac200e84bb",
+            "isVisible": true,
+            "position": 12
           }
         ]
       },
