@@ -87,6 +87,7 @@
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "deep-equal": "^2.2.2",
+    "fflate": "^0.8.2",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.18.0",
     "fuse.js": "^7.1.0",

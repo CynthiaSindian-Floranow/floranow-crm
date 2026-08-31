@@ -6,7 +6,9 @@ import { useEffect, useState } from 'react';
 let loadedDataset: LocalityDataset | undefined;
 let datasetPromise: Promise<LocalityDataset> | undefined;
 
-const loadLocalityDataset = () => {
+// Exported so non-React callers -- the lead registration export -- can await the
+// same cached copy instead of triggering a second fetch.
+export const loadLocalityDataset = () => {
   datasetPromise ??= import('@/localities/generated/localityDataset.json').then(
     (module) => {
       // TypeScript widens the JSON tuples to arrays; the generator is what

@@ -6,9 +6,6 @@ export type RecordExportTemplateColumn = {
   // Placeholder columns omit getValue: they are exported empty on purpose so the
   // target system's importer still sees the column and a human fills it in.
   getValue?: (record: ObjectRecord) => string | null | undefined;
-  // Set only when getValue already guarantees a value that cannot carry a CSV
-  // formula, so the injection guard would corrupt it rather than protect it.
-  isPreSanitized?: boolean;
 };
 
 export type RecordExportTemplate = {
