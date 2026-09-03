@@ -4,55 +4,11 @@
 import { FieldType, defineField } from 'twenty-sdk/define';
 
 export default defineField({
-  universalIdentifier: "639c52c3-e181-52aa-a5d2-26d793d85ed3",
+  universalIdentifier: "0d7d96ad-f4d0-4272-8fe9-57e777faa1d0",
   objectUniversalIdentifier: "20202020-9549-49dd-b2b2-883999db8938" /* opportunity */,
-  type: FieldType.SELECT,
+  type: FieldType.TEXT,
   name: "disqualifiedReason",
   label: "Disqualified Reason",
   icon: "IconX",
-  isNullable: true,
-  options: [
-    {
-      id: "e1f2afe6-a1b2-5e38-b135-a56596ea0c30",
-      color: "green",
-      label: "Wrong Business Type",
-      value: "WRONG_BUSINESS_TYPE",
-      position: 0
-    },
-    {
-      id: "f7621793-73d9-5a6f-8e27-49dadcff381b",
-      color: "turquoise",
-      label: "Below Mov",
-      value: "BELOW_MOV",
-      position: 1
-    },
-    {
-      id: "8ff72f50-a7a4-5ca6-bc10-9ad7cef5799c",
-      color: "sky",
-      label: "Out Of Area",
-      value: "OUT_OF_AREA",
-      position: 2
-    },
-    {
-      id: "2b20ac4c-5a5e-5c28-936e-a5c228aa858b",
-      color: "blue",
-      label: "Duplicate",
-      value: "DUPLICATE",
-      position: 3
-    },
-    {
-      id: "6191714d-1a9a-5215-ac3b-3985214f1773",
-      color: "purple",
-      label: "No Response",
-      value: "NO_RESPONSE",
-      position: 4
-    },
-    {
-      id: "a22b5216-56a8-4dec-b23a-0c543ddffcdb",
-      color: "orange",
-      label: "Not Ready For Online",
-      value: "NOT_READY_FOR_ONLINE",
-      position: 5
-    }
-  ]
+  isNullable: true
 });

@@ -200,38 +200,45 @@ never touched by the pull.
   field, so anything deactivated in dev arrives active on prod. The pull warns
   when it finds one.
 
-### Known gap: record page sections on standard objects
+### Record page sections travel, but not in the manifest
 
 A view field group (the sections on a record page) can only be declared nested
-inside a view that this app owns. There is no standalone `defineViewFieldGroup`.
-
-Sections you added to a **standard** object's record page — Company, Opportunity
-— therefore cannot ship in the manifest. `model:pull` writes them to
+inside a view that this app owns. There is no standalone `defineViewFieldGroup`,
+so sections on a **standard** object's record page — Company, Opportunity —
+cannot ship in the manifest itself. `model:pull` writes them to
 `src/prerequisites/view-field-groups.json` and warns.
 
-They cannot be created with matching identifiers over the API either:
-`CreateViewFieldGroupInput` marks `universalIdentifier` as `@HideField()`, so it
-is not part of the GraphQL schema. Creating one through the API would give it a
-fresh identifier that the manifest does not reference.
+`model:post-install` then applies them, which is why `model:deploy` runs it
+straight after the install. `upsertFieldsWidget` accepts a caller-chosen group
+id and uses it as the group's `universalIdentifier`, so the structure is rebuilt
+with the same identifiers dev has. Sections match by name against whatever the
+target already has, so standard sections are updated in place rather than
+duplicated.
 
-So `model:pull` **drops the group reference** from the affected view fields
-rather than ship an identifier that will not resolve. The consequence is purely
-cosmetic: those fields install correctly but appear ungrouped on the target's
-record page instead of under their section heading.
+Two things follow from that:
 
-The groups themselves are still recorded in
-`src/prerequisites/view-field-groups.json` so nothing is lost track of.
+- **Order matters.** The install creates the fields; post-install places them.
+  Run post-install second or new fields land ungrouped.
+- **The JSON carries the whole structure, not just the custom parts**, because
+  `upsertFieldsWidget` replaces every group on a widget.
 
-**To restore grouping later** — a small change to this fork, worth doing only if
-the sections matter visually:
+> An earlier version of this file claimed sections could not reach the target
+> without exposing `universalIdentifier` on `CreateViewFieldGroupInput` — a fork
+> change to the server. That is not needed; `upsertFieldsWidget` already takes
+> the id. Do not make that change.
 
-1. Remove `@HideField()` from `universalIdentifier` in
-   `packages/twenty-server/src/engine/metadata-modules/view-field-group/dtos/inputs/create-view-field-group.input.ts`
-   and expose it as a normal nullable `@Field()`.
-2. Deploy that server change.
-3. Create the sections on the target with the identifiers from the JSON file.
-4. Re-enable the reference in `pull-model.ts` (the `viewFieldGroupUniversalIdentifier: undefined`
-   line, which is commented for this reason) and re-pull.
+### The `overrides` trap
+
+Rows owned by the Twenty Standard app are never edited in place. Moving a
+standard section, or dragging a standard field into a different one, leaves
+`position` and `viewFieldGroupId` untouched and records the change in an
+`overrides` JSONB column instead.
+
+`model:pull` therefore reads both and applies `overrides` on top of the base
+columns. Reading only the base columns reports the layout Twenty shipped rather
+than the one on screen — the snapshot disagrees with dev while looking
+plausible, and post-install replays the wrong structure onto prod. If you add a
+query for a `view*` table here, apply `applyOverrides` to it.
 
 ## Rules that keep this working
 

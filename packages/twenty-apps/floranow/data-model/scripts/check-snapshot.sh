@@ -23,7 +23,10 @@ fi
 
 yarn model:pull >/dev/null
 
-if git diff --quiet -- src; then
+# `git diff` only reports tracked files, so a brand-new object, field or view —
+# the most common kind of drift — would slip through it unseen. `git status`
+# reports untracked and deleted files too.
+if [ -z "$(git status --porcelain -- src)" ]; then
   echo "Data model snapshot is up to date."
   exit 0
 fi
@@ -45,6 +48,6 @@ Changed files:
 ----------------------------------------------------------------------
 MESSAGE
 
-git --no-pager diff --stat -- src
+git --no-pager status --short -- src
 
 exit 1

@@ -4,10 +4,10 @@
 import { defineViewField } from 'twenty-sdk/define';
 
 export default defineViewField({
-  universalIdentifier: "9f9b0660-7923-4bd8-9b60-0349e9df523d",
+  universalIdentifier: "db0c7f5d-883f-464a-b484-2a0b7930ff52",
   viewUniversalIdentifier: "20202020-a003-4a03-8a03-0aa0b1ca3001" /* opportunity / Opportunity Record Page Fields */,
-  fieldMetadataUniversalIdentifier: "639c52c3-e181-52aa-a5d2-26d793d85ed3",
+  fieldMetadataUniversalIdentifier: "0d7d96ad-f4d0-4272-8fe9-57e777faa1d0",
   isVisible: true,
   size: 180,
-  position: 2
+  position: 4
 });

@@ -275,6 +275,20 @@
         "command": "dotenv npx vite-node scripts/generate-mock-data.ts"
       }
     },
+    "localities:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx vite-node scripts/generate-locality-dataset.ts"
+      }
+    },
+    "lead-registration-template:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx vite-node scripts/generate-lead-registration-template.ts"
+      }
+    },
     "lingui:extract": {
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],

@@ -46,13 +46,19 @@ import { NumberFieldInput } from '@/object-record/record-field/ui/meta-types/inp
 import { RatingFieldInput } from '@/object-record/record-field/ui/meta-types/input/components/RatingFieldInput';
 import { TextFieldInput } from '@/object-record/record-field/ui/meta-types/input/components/TextFieldInput';
 import { isFieldText } from '@/object-record/record-field/ui/types/guards/isFieldText';
+import { LocalitySelectFieldInput } from '@/localities/components/LocalitySelectFieldInput';
+import { isLocalityField } from '@/localities/utils/isLocalityField';
 
 export const FieldInput = () => {
   const { fieldDefinition } = useContext(FieldContext);
 
   return (
     <>
-      {isFieldRelationManyToOne(fieldDefinition) ? (
+      {/* Checked before the type guards: these are TEXT fields, but Lead's
+          country / state / city are picked from a list rather than typed. */}
+      {isLocalityField(fieldDefinition) ? (
+        <LocalitySelectFieldInput />
+      ) : isFieldRelationManyToOne(fieldDefinition) ? (
         <RelationManyToOneFieldInput />
       ) : isFieldRelationOneToMany(fieldDefinition) ? (
         <RelationOneToManyFieldInput />
