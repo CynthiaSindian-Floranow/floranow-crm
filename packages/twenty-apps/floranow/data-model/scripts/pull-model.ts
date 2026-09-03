@@ -51,6 +51,18 @@ const warn = (message: string) => {
   warnings.push(message);
 };
 
+// Rows the Twenty Standard app owns are not edited in place. Moving a standard
+// section, or dragging a standard field into another one, leaves the base
+// columns alone and records the change in an `overrides` JSONB column instead.
+// Reading the base columns therefore reports the shipped layout rather than the
+// one on screen — the snapshot silently disagrees with dev, and post-install
+// replays the wrong structure onto the target.
+const applyOverrides = <TRow>(row: TRow & { overrides: Partial<TRow> | null }) => {
+  const { overrides, ...base } = row;
+
+  return { ...(base as TRow), ...(overrides ?? {}) };
+};
+
 // Only the built-in Twenty Standard app is allowed to use these names. An
 // installed application is rejected with INVALID_FIELD_INPUT, so anything named
 // after one of them cannot ship and is skipped here rather than failing the
@@ -713,15 +725,20 @@ const main = async () => {
       viewFieldGroupId: string | null;
     };
 
-    const { rows: viewFieldRows } = await client.query<ViewFieldRow>(
+    const { rows: rawViewFieldRows } = await client.query<
+      ViewFieldRow & { overrides: Partial<ViewFieldRow> | null }
+    >(
       `select vf."viewId", vf."universalIdentifier", vf."fieldMetadataId", vf."isVisible",
-              vf.size, vf.position, vf."aggregateOperation", vf."viewFieldGroupId"
+              vf.size, vf.position, vf."aggregateOperation", vf."viewFieldGroupId",
+              vf.overrides
        from core."viewField" vf
        join core."fieldMetadata" f on f.id = vf."fieldMetadataId"
        where vf."workspaceId" = $1 and vf."deletedAt" is null
          and (vf."applicationId" = $2 or f."applicationId" = $2)`,
       [workspace.id, customApplicationId],
     );
+
+    const viewFieldRows = rawViewFieldRows.map(applyOverrides<ViewFieldRow>);
 
     const viewFieldsByViewId = new Map<string, ViewFieldRow[]>();
 
@@ -796,7 +813,7 @@ const main = async () => {
       [workspace.id],
     );
 
-    const { rows: allViewFieldGroups } = await client.query<{
+    type ViewFieldGroupRow = {
       id: string;
       universalIdentifier: string;
       name: string | null;
@@ -804,26 +821,44 @@ const main = async () => {
       isVisible: boolean;
       viewId: string;
       applicationId: string;
-    }>(
-      `select id, "universalIdentifier", name, position, "isVisible", "viewId", "applicationId"
+    };
+
+    const { rows: rawViewFieldGroups } = await client.query<
+      ViewFieldGroupRow & { overrides: Partial<ViewFieldGroupRow> | null }
+    >(
+      `select id, "universalIdentifier", name, position, "isVisible", "viewId",
+              "applicationId", overrides
        from core."viewFieldGroup" where "workspaceId" = $1 and "deletedAt" is null`,
       [workspace.id],
+    );
+
+    const allViewFieldGroups = rawViewFieldGroups.map(
+      applyOverrides<ViewFieldGroupRow>,
     );
 
     // Every view field of every view, regardless of ownership. Needed to
     // rebuild complete section structures: upsertFieldsWidget replaces all
     // groups on a widget, so each group must list all of its fields.
-    const { rows: allViewFieldRows } = await client.query<{
+    type AllViewFieldRow = {
       id: string;
       viewId: string;
       fieldMetadataId: string;
       isVisible: boolean;
       position: number;
       viewFieldGroupId: string | null;
-    }>(
-      `select id, "viewId", "fieldMetadataId", "isVisible", position, "viewFieldGroupId"
+    };
+
+    const { rows: rawAllViewFieldRows } = await client.query<
+      AllViewFieldRow & { overrides: Partial<AllViewFieldRow> | null }
+    >(
+      `select id, "viewId", "fieldMetadataId", "isVisible", position,
+              "viewFieldGroupId", overrides
        from core."viewField" where "workspaceId" = $1 and "deletedAt" is null`,
       [workspace.id],
+    );
+
+    const allViewFieldRows = rawAllViewFieldRows.map(
+      applyOverrides<AllViewFieldRow>,
     );
 
     const allViewFieldRowsByViewId = new Map<

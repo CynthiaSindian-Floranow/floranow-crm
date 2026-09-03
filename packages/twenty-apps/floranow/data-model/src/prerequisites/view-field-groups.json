@@ -660,12 +660,12 @@
         "isVisible": true,
         "fields": [
           {
-            "fieldUniversalIdentifier": "20202020-583e-4642-8533-db761d5fa82f",
+            "fieldUniversalIdentifier": "20202020-6f76-477d-8551-28cd65b2b4b9",
             "isVisible": true,
             "position": 0
           },
           {
-            "fieldUniversalIdentifier": "20202020-6f76-477d-8551-28cd65b2b4b9",
+            "fieldUniversalIdentifier": "20202020-583e-4642-8533-db761d5fa82f",
             "isVisible": true,
             "position": 1
           },
@@ -675,24 +675,9 @@
             "position": 2
           },
           {
-            "fieldUniversalIdentifier": "20202020-59c0-4179-a208-4a255f04a5be",
-            "isVisible": false,
-            "position": 4
-          },
-          {
-            "fieldUniversalIdentifier": "20202020-dd3f-42d5-a382-db58aabf43d3",
-            "isVisible": false,
-            "position": 5
-          },
-          {
-            "fieldUniversalIdentifier": "20202020-87c7-4118-83d6-2f4031005209",
-            "isVisible": false,
-            "position": 6
-          },
-          {
-            "fieldUniversalIdentifier": "20202020-30e2-421f-96c7-19c69d1cf631",
-            "isVisible": false,
-            "position": 7
+            "fieldUniversalIdentifier": "20202020-be7e-4d1e-8e19-3d5c7c4b9f2a",
+            "isVisible": true,
+            "position": 3
           }
         ]
       },
@@ -711,18 +696,13 @@
             "fieldUniversalIdentifier": "20202020-8dfb-42fc-92b6-01afb759ed16",
             "isVisible": true,
             "position": 1
-          },
-          {
-            "fieldUniversalIdentifier": "20202020-be7e-4d1e-8e19-3d5c7c4b9f2a",
-            "isVisible": true,
-            "position": 2
           }
         ]
       },
       {
         "id": "917443e8-7f3c-466a-8733-b060d38595fc",
-        "name": "Profiling",
-        "position": 1,
+        "name": "Business",
+        "position": 2,
         "isVisible": true,
         "fields": [
           {
@@ -731,154 +711,107 @@
             "position": 0
           },
           {
-            "fieldUniversalIdentifier": "95a4ea1e-9de5-4ab3-be1c-328bcb4dc9f9",
-            "isVisible": true,
-            "position": 1
-          },
-          {
-            "fieldUniversalIdentifier": "ec5127b6-834f-4a3b-a577-e5b27eeb6396",
-            "isVisible": true,
-            "position": 2
-          },
-          {
-            "fieldUniversalIdentifier": "a730b7c7-1ffa-4158-a5b3-b15a8e8cd243",
-            "isVisible": true,
-            "position": 3
-          },
-          {
-            "fieldUniversalIdentifier": "9c88542d-3ba2-46bb-816b-b489aadce6c1",
-            "isVisible": true,
-            "position": 4
-          },
-          {
             "fieldUniversalIdentifier": "59ddc2c6-7c7a-463b-b4c1-68c4fc58b3d2",
             "isVisible": true,
-            "position": 5
-          },
-          {
-            "fieldUniversalIdentifier": "82a318ff-1682-469b-ba70-f18608b32b7a",
-            "isVisible": true,
-            "position": 6
-          },
-          {
-            "fieldUniversalIdentifier": "a1e326f4-cb99-4680-8600-450f703dd833",
-            "isVisible": true,
-            "position": 7
-          },
-          {
-            "fieldUniversalIdentifier": "4c255020-4376-41a7-9535-aeef0379540a",
-            "isVisible": true,
-            "position": 8
-          },
-          {
-            "fieldUniversalIdentifier": "1a5850e6-ca9a-44a5-832d-09597c7c482d",
-            "isVisible": true,
-            "position": 9
-          },
-          {
-            "fieldUniversalIdentifier": "ee2819ad-3cc2-4c5c-a673-97a6fd7f33d9",
-            "isVisible": true,
-            "position": 10
-          },
-          {
-            "fieldUniversalIdentifier": "5bbba866-13a6-4f7c-b7c9-17e6a308864c",
-            "isVisible": true,
-            "position": 11
-          },
-          {
-            "fieldUniversalIdentifier": "cdf8b1c3-8d33-4ff3-9197-fddf6c161fb3",
-            "isVisible": true,
-            "position": 12
-          },
-          {
-            "fieldUniversalIdentifier": "24d0c985-9e96-4b35-ba30-adf26656b794",
-            "isVisible": true,
-            "position": 13
-          },
-          {
-            "fieldUniversalIdentifier": "c9dc1d2c-4868-4e95-b3a4-75dab649a5c1",
-            "isVisible": true,
-            "position": 14
-          }
-        ]
-      },
-      {
-        "id": "20202020-a003-4a03-8a03-0aa0b1ca3103",
-        "name": "System",
-        "position": 2,
-        "isVisible": true,
-        "fields": [
-          {
-            "fieldUniversalIdentifier": "20202020-d01b-4132-9b32-123456789abc",
-            "isVisible": true,
-            "position": 0
-          },
-          {
-            "fieldUniversalIdentifier": "20202020-a63e-4a62-8e63-42a51828f831",
-            "isVisible": true,
             "position": 1
-          },
-          {
-            "fieldUniversalIdentifier": "20202020-d01c-4133-8c33-23456789abcd",
-            "isVisible": false,
-            "position": 2
-          },
-          {
-            "fieldUniversalIdentifier": "3c8a6095-3f64-4e81-a59e-66c2bd181e11",
-            "isVisible": false,
-            "position": 3
-          },
-          {
-            "fieldUniversalIdentifier": "a15a5193-ec1a-499f-a5c0-2738525c7f83",
-            "isVisible": true,
-            "position": 4
-          },
-          {
-            "fieldUniversalIdentifier": "6cbaf470-a3c2-4970-a43a-3e5f98998f0e",
-            "isVisible": true,
-            "position": 5
-          },
-          {
-            "fieldUniversalIdentifier": "deba79a0-ac03-43bc-b2de-8277cd86a68f",
-            "isVisible": true,
-            "position": 6
-          },
-          {
-            "fieldUniversalIdentifier": "cec3f48e-5f34-4287-a528-56c6e0c75f21",
-            "isVisible": true,
-            "position": 7
-          },
-          {
-            "fieldUniversalIdentifier": "66a258f9-e776-43d4-9006-f3e821f2b9f0",
-            "isVisible": true,
-            "position": 8
-          },
-          {
-            "fieldUniversalIdentifier": "0d7d96ad-f4d0-4272-8fe9-57e777faa1d0",
-            "isVisible": true,
-            "position": 9
-          },
-          {
-            "fieldUniversalIdentifier": "34a23bf7-1e17-4518-aea9-9b75805d7b5e",
-            "isVisible": true,
-            "position": 10
-          },
-          {
-            "fieldUniversalIdentifier": "6e051351-b14e-40e0-92fb-008e947d02e7",
-            "isVisible": true,
-            "position": 11
           },
           {
             "fieldUniversalIdentifier": "41148a43-6f17-43f2-a792-22ac200e84bb",
             "isVisible": true,
-            "position": 12
+            "position": 2
+          },
+          {
+            "fieldUniversalIdentifier": "6e051351-b14e-40e0-92fb-008e947d02e7",
+            "isVisible": true,
+            "position": 3
+          },
+          {
+            "fieldUniversalIdentifier": "82a318ff-1682-469b-ba70-f18608b32b7a",
+            "isVisible": true,
+            "position": 4
+          },
+          {
+            "fieldUniversalIdentifier": "4c255020-4376-41a7-9535-aeef0379540a",
+            "isVisible": true,
+            "position": 5
+          },
+          {
+            "fieldUniversalIdentifier": "34a23bf7-1e17-4518-aea9-9b75805d7b5e",
+            "isVisible": true,
+            "position": 6
+          },
+          {
+            "fieldUniversalIdentifier": "95a4ea1e-9de5-4ab3-be1c-328bcb4dc9f9",
+            "isVisible": true,
+            "position": 7
+          }
+        ]
+      },
+      {
+        "id": "7c1e4b90-3a52-4d18-9f6a-2b8c5d071e34",
+        "name": "Location",
+        "position": 3,
+        "isVisible": true,
+        "fields": [
+          {
+            "fieldUniversalIdentifier": "ec5127b6-834f-4a3b-a577-e5b27eeb6396",
+            "isVisible": true,
+            "position": 0
+          },
+          {
+            "fieldUniversalIdentifier": "9c88542d-3ba2-46bb-816b-b489aadce6c1",
+            "isVisible": true,
+            "position": 1
+          },
+          {
+            "fieldUniversalIdentifier": "a730b7c7-1ffa-4158-a5b3-b15a8e8cd243",
+            "isVisible": true,
+            "position": 2
+          },
+          {
+            "fieldUniversalIdentifier": "a15a5193-ec1a-499f-a5c0-2738525c7f83",
+            "isVisible": true,
+            "position": 3
+          }
+        ]
+      },
+      {
+        "id": "9f3a26c5-84b1-4e77-a0d3-6c17e9b45820",
+        "name": "Online",
+        "position": 4,
+        "isVisible": true,
+        "fields": [
+          {
+            "fieldUniversalIdentifier": "a1e326f4-cb99-4680-8600-450f703dd833",
+            "isVisible": true,
+            "position": 0
+          },
+          {
+            "fieldUniversalIdentifier": "6cbaf470-a3c2-4970-a43a-3e5f98998f0e",
+            "isVisible": true,
+            "position": 1
+          },
+          {
+            "fieldUniversalIdentifier": "deba79a0-ac03-43bc-b2de-8277cd86a68f",
+            "isVisible": true,
+            "position": 2
+          },
+          {
+            "fieldUniversalIdentifier": "cec3f48e-5f34-4287-a528-56c6e0c75f21",
+            "isVisible": true,
+            "position": 3
+          },
+          {
+            "fieldUniversalIdentifier": "66a258f9-e776-43d4-9006-f3e821f2b9f0",
+            "isVisible": true,
+            "position": 4
           }
         ]
       },
       {
         "id": "17f4a41f-720f-4e20-9526-3eee6c3d4f5f",
         "name": "Qualification",
-        "position": 2,
+        "position": 5,
         "isVisible": true,
         "fields": [
           {
@@ -892,9 +825,100 @@
             "position": 1
           },
           {
+            "fieldUniversalIdentifier": "24d0c985-9e96-4b35-ba30-adf26656b794",
+            "isVisible": true,
+            "position": 2
+          },
+          {
             "fieldUniversalIdentifier": "4949210f-43a8-5305-8c46-2211121f0cb3",
             "isVisible": true,
             "position": 3
+          },
+          {
+            "fieldUniversalIdentifier": "0d7d96ad-f4d0-4272-8fe9-57e777faa1d0",
+            "isVisible": true,
+            "position": 4
+          }
+        ]
+      },
+      {
+        "id": "4d80f7a2-15e9-4c63-b8d1-3ea6027f9c15",
+        "name": "Commercial",
+        "position": 6,
+        "isVisible": true,
+        "fields": [
+          {
+            "fieldUniversalIdentifier": "1a5850e6-ca9a-44a5-832d-09597c7c482d",
+            "isVisible": true,
+            "position": 0
+          },
+          {
+            "fieldUniversalIdentifier": "ee2819ad-3cc2-4c5c-a673-97a6fd7f33d9",
+            "isVisible": true,
+            "position": 1
+          },
+          {
+            "fieldUniversalIdentifier": "5bbba866-13a6-4f7c-b7c9-17e6a308864c",
+            "isVisible": true,
+            "position": 2
+          },
+          {
+            "fieldUniversalIdentifier": "cdf8b1c3-8d33-4ff3-9197-fddf6c161fb3",
+            "isVisible": true,
+            "position": 3
+          }
+        ]
+      },
+      {
+        "id": "20202020-a003-4a03-8a03-0aa0b1ca3103",
+        "name": "System",
+        "position": 7,
+        "isVisible": true,
+        "fields": [
+          {
+            "fieldUniversalIdentifier": "c9dc1d2c-4868-4e95-b3a4-75dab649a5c1",
+            "isVisible": true,
+            "position": 0
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-d01b-4132-9b32-123456789abc",
+            "isVisible": true,
+            "position": 1
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-a63e-4a62-8e63-42a51828f831",
+            "isVisible": true,
+            "position": 2
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-d01c-4133-8c33-23456789abcd",
+            "isVisible": true,
+            "position": 3
+          },
+          {
+            "fieldUniversalIdentifier": "3c8a6095-3f64-4e81-a59e-66c2bd181e11",
+            "isVisible": true,
+            "position": 4
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-dd3f-42d5-a382-db58aabf43d3",
+            "isVisible": false,
+            "position": 5
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-59c0-4179-a208-4a255f04a5be",
+            "isVisible": false,
+            "position": 6
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-87c7-4118-83d6-2f4031005209",
+            "isVisible": false,
+            "position": 7
+          },
+          {
+            "fieldUniversalIdentifier": "20202020-30e2-421f-96c7-19c69d1cf631",
+            "isVisible": false,
+            "position": 8
           }
         ]
       }

@@ -225,14 +225,13 @@ This is the real cost of snapshot-based syncing. Better known than discovered.
   Both live on entities the app does not own, so the manifest cannot carry them.
   `yarn model:post-install` applies both from `src/prerequisites/`. Run it after
   every install — it is idempotent.
-- **Record page sections on standard objects.** There is no standalone
-  `defineViewFieldGroup`, and `createCoreViewFieldGroup` hides
-  `universalIdentifier` from the GraphQL schema, so sections added to the Company
-  and Opportunity record pages cannot ship *and* cannot be recreated with
-  matching identifiers over the API. The affected view fields install fine but
-  land ungrouped. They are recorded in
-  `src/prerequisites/view-field-groups.json`; `README.md` describes the small
-  fork change that would restore grouping.
+Record page sections on standard objects are the subtlest of these. There is no
+standalone `defineViewFieldGroup`, so the manifest cannot carry them — but
+`model:post-install` rebuilds them from
+`src/prerequisites/view-field-groups.json` using `upsertFieldsWidget`, which
+takes a caller-chosen group id. They do reach prod, just on the second step
+rather than the first. `README.md` has the details, including why the base
+columns alone are not enough to read them back out of dev.
 
 ---
 
