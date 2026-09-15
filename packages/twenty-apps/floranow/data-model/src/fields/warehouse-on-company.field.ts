@@ -21,11 +21,102 @@ export default defineField({
       position: 0
     },
     {
+      id: "711046da-c282-4fcd-b180-1db69ded029b",
+      color: "turquoise",
+      label: "Jeddah Warehouse",
+      value: "JEDDAH_WAREHOUSE",
+      position: 1
+    },
+    {
+      id: "a20aada5-7673-464e-8853-771c4c488335",
+      color: "sky",
+      label: "Dammam Warehouse",
+      value: "DAMMAM_WAREHOUSE",
+      position: 2
+    },
+    {
+      id: "18fbd43c-13f5-4eb5-a478-165a30765447",
+      color: "blue",
+      label: "Riyadh Warehouse",
+      value: "RIYADH_WAREHOUSE",
+      position: 3
+    },
+    {
+      id: "b46b70d9-3a67-46d1-8ad0-fcae04b7d1e0",
+      color: "purple",
+      label: "Medina Warehouse",
+      value: "MEDINA_WAREHOUSE",
+      position: 4
+    },
+    {
+      id: "6ad165d9-675f-453b-bcf5-ec870ff20241",
+      color: "pink",
+      label: "Qassim Warehouse",
+      value: "QASSIM_WAREHOUSE",
+      position: 5
+    },
+    {
+      id: "0de3c881-ad71-47d8-88ef-877fb25de82f",
+      color: "red",
+      label: "Hail Warehouse",
+      value: "HAIL_WAREHOUSE",
+      position: 6
+    },
+    {
+      id: "5c0e3475-3f5d-4ab1-b7de-08d8692126da",
+      color: "orange",
+      label: "Tabuk Warehouse",
+      value: "TABUK_WAREHOUSE",
+      position: 7
+    },
+    {
+      id: "f31e25a7-d24e-4b34-a33b-c2f22243e269",
+      color: "yellow",
+      label: "Hafar Warehouse",
+      value: "HAFAR_WAREHOUSE",
+      position: 8
+    },
+    {
+      id: "e016d9ce-8bdf-4757-884c-0e2c52499889",
+      color: "gray",
+      label: "Jouf Warehouse",
+      value: "JOUF_WAREHOUSE",
+      position: 9
+    },
+    {
+      id: "7cdae329-e765-4676-a89a-9886326f7f46",
+      color: "green",
+      label: "KSA National Hub",
+      value: "KSA_NATIONAL_HUB",
+      position: 10
+    },
+    {
+      id: "b576ebc6-1801-43a2-8865-2526a68b2faa",
+      color: "turquoise",
+      label: "Jordan Warehouse",
+      value: "JORDAN_WAREHOUSE",
+      position: 11
+    },
+    {
+      id: "cb50dba9-7faa-4ee1-afd4-e137af10f135",
+      color: "sky",
+      label: "Kuwait Warehouse",
+      value: "KUWAIT_WAREHOUSE",
+      position: 12
+    },
+    {
+      id: "64869120-9ea2-4ac0-b5fe-ffc937855347",
+      color: "blue",
+      label: "Qatar Warehouse",
+      value: "QATAR_WAREHOUSE",
+      position: 13
+    },
+    {
       id: "ab775971-ce40-506b-af34-137f9eaaddb5",
       color: "turquoise",
       label: "Other",
       value: "OTHER",
-      position: 1
+      position: 14
     }
   ]
 });

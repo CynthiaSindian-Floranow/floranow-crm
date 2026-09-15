@@ -124,6 +124,118 @@ export default defineField({
       label: "Alissar",
       value: "ALISSAR",
       position: 15
+    },
+    {
+      id: "df11763a-200f-4879-9237-855820c2306e",
+      color: "red",
+      label: "Jeddah",
+      value: "JEDDAH",
+      position: 16
+    },
+    {
+      id: "347ab77b-6ff0-4de4-9e64-658fb79ac80b",
+      color: "orange",
+      label: "Dammam",
+      value: "DAMMAM",
+      position: 17
+    },
+    {
+      id: "78ce4a7e-1231-44dd-a63d-5b147c9610be",
+      color: "yellow",
+      label: "Riyadh",
+      value: "RIYADH",
+      position: 18
+    },
+    {
+      id: "365dce1a-08c1-416f-a076-957117cd8de2",
+      color: "gray",
+      label: "Riyadh Central",
+      value: "RIYADH_CENTRAL",
+      position: 19
+    },
+    {
+      id: "4598eed6-8fc7-43df-8143-657017dbcdd5",
+      color: "green",
+      label: "Al-Khobar",
+      value: "AL_KHOBAR",
+      position: 20
+    },
+    {
+      id: "7ec1d48f-3981-4e73-bb79-c5b006c46c2e",
+      color: "turquoise",
+      label: "Al-Hasa",
+      value: "AL_HASA",
+      position: 21
+    },
+    {
+      id: "3f00052f-a4bc-45d6-9f9a-c867c721b29f",
+      color: "sky",
+      label: "Qatif",
+      value: "QATIF",
+      position: 22
+    },
+    {
+      id: "c3f08783-fc06-40dc-81db-95d3f22be85c",
+      color: "blue",
+      label: "Medina",
+      value: "MEDINA",
+      position: 23
+    },
+    {
+      id: "de3e3553-9e2d-464e-a820-85b571d9618b",
+      color: "purple",
+      label: "Hail",
+      value: "HAIL",
+      position: 24
+    },
+    {
+      id: "71801ad9-fafb-4793-a8b7-f76510b2021e",
+      color: "pink",
+      label: "Tabuk",
+      value: "TABUK",
+      position: 25
+    },
+    {
+      id: "fc44743c-8d5c-4c72-80af-8fac9cbb58f5",
+      color: "red",
+      label: "Qassim Al-Rass",
+      value: "QASSIM_AL_RASS",
+      position: 26
+    },
+    {
+      id: "8182a78e-9b7f-462c-81a8-8b4bd51b4f6b",
+      color: "orange",
+      label: "Qassim Buridah",
+      value: "QASSIM_BURIDAH",
+      position: 27
+    },
+    {
+      id: "58f7f763-f5c6-4dff-b150-fd7f386bcc2b",
+      color: "yellow",
+      label: "Qassim Unaizah",
+      value: "QASSIM_UNAIZAH",
+      position: 28
+    },
+    {
+      id: "199d4d11-7e5d-4e87-8113-7f960300cc0e",
+      color: "gray",
+      label: "Al Jouf",
+      value: "AL_JOUF",
+      position: 29
+    },
+    {
+      id: "ed048142-3798-4bf9-bb09-5afec171bbfe",
+      color: "green",
+      label: "Hafar",
+      value: "HAFAR",
+      position: 30
+    },
+    {
+      id: "83e0ca1f-117e-4b0b-bdef-c2a41e8c72a4",
+      color: "turquoise",
+      label: "Kuwait",
+      value: "KUWAIT",
+      position: 31
     }
   ]
 });
