@@ -60,6 +60,20 @@ const ERP_ROUTE_MAP: Record<string, string> = {
   'alissar': 'ALISSAR',
 };
 
+// ERP user_categories.name → CRM accountCategory enum. "Deleted Customers"
+// and "Closed" have no CRM option on purpose: a lead pointing at one of those
+// is a data problem to surface, not a category to record.
+const ACCOUNT_CATEGORY_MAP: Record<string, string> = {
+  'retail shops': 'RETAIL_SHOP',
+  'hotels': 'HOTEL',
+  'supermarkets': 'SUPERMARKET',
+  'weddings & events': 'WEDDINGS_EVENTS',
+  'micro-buyer': 'MICRO_BUYER',
+  'online': 'ONLINE',
+  'bulk': 'BULK',
+  'fully serviced': 'FULLY_SERVICED',
+};
+
 const BLOCKED_STATUS_MAP: Record<string, string> = {
   unblocked: 'UNBLOCKED',
   manual_block: 'MANUAL_BLOCK',
@@ -82,6 +96,9 @@ export const mapCustomerType = (erpValue: string | null): string | null => {
 
   return COMPANY_CUSTOMER_TYPES.has(candidate) ? candidate : null;
 };
+
+export const mapAccountCategory = (erpValue: string | null): string | null =>
+  ACCOUNT_CATEGORY_MAP[normalize(erpValue)] ?? null;
 
 export const mapPaymentTerm = (erpValue: string | null): string | null =>
   PAYMENT_TERM_MAP[normalize(erpValue)] ?? null;
@@ -183,6 +200,11 @@ export const buildCompanyPayload = (
       'paymentTerm',
       erp.payment_term,
       mapPaymentTerm(erp.payment_term),
+    ),
+    accountCategory: track(
+      'accountCategory',
+      erp.user_category,
+      mapAccountCategory(erp.user_category),
     ),
     warehouse: mapWarehouse(erp.warehouse),
     erpRoute: track('erpRoute', erp.route, mapErpRoute(erp.route)),

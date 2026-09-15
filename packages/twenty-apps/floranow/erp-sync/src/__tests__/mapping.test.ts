@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { type ErpCustomerSnapshot } from '../erp-client';
 import {
   buildCompanyPayload,
+  mapAccountCategory,
   mapAcquisitionSource,
   mapBlockedStatus,
   mapCustomerType,
@@ -33,6 +34,7 @@ const snapshot = (overrides: Partial<ErpCustomerSnapshot> = {}): ErpCustomerSnap
   },
   customer_type: 'retail',
   internal: false,
+  user_category: 'Retail Shops',
   payment_term: 'Cash on Delivery',
   route: 'Dubai City',
   warehouse: 'Dubai Warehouse',
@@ -107,9 +109,19 @@ test('lead source carries over, SCRAPE_SOCIAL falls back to SCRAPE_OTHER', () =>
   assert.equal(mapAcquisitionSource(null), null);
 });
 
+test('account categories map by label; dead categories are flagged, not stored', () => {
+  assert.equal(mapAccountCategory('Retail Shops'), 'RETAIL_SHOP');
+  assert.equal(mapAccountCategory('Weddings & Events'), 'WEDDINGS_EVENTS');
+  assert.equal(mapAccountCategory('SuperMarkets'), 'SUPERMARKET');
+  assert.equal(mapAccountCategory('Deleted Customers'), null);
+  assert.equal(mapAccountCategory('Closed'), null);
+  assert.equal(mapAccountCategory(null), null);
+});
+
 test('company payload carries identity, mirror fields and provisioning defaults', () => {
   const { fields, unmapped } = buildCompanyPayload(lead, snapshot());
 
+  assert.equal(fields.accountCategory, 'RETAIL_SHOP');
   assert.equal(fields.name, 'Rose Sky Trading');
   assert.equal(fields.debtorNumber, 'D-100');
   assert.equal(fields.erpUserId, 42);

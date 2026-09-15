@@ -23,6 +23,7 @@ export type ErpCustomerSnapshot = {
   };
   customer_type: string | null;
   internal: boolean;
+  user_category: string | null;
   payment_term: string | null;
   route: string | null;
   warehouse: string | null;
