@@ -57,7 +57,46 @@ const ERP_ROUTE_MAP: Record<string, string> = {
   'hotels': 'HOTELS',
   'internal-uae': 'INTERNAL_UAE',
   'internal uae': 'INTERNAL_UAE',
+  'internal': 'INTERNAL_UAE',
   'alissar': 'ALISSAR',
+  'jeddah': 'JEDDAH',
+  'dammam': 'DAMMAM',
+  'riyadh': 'RIYADH',
+  'riyadh central': 'RIYADH_CENTRAL',
+  'al-khobar': 'AL_KHOBAR',
+  'al khobar': 'AL_KHOBAR',
+  'al-hasa': 'AL_HASA',
+  'al hasa': 'AL_HASA',
+  'qatif': 'QATIF',
+  'medina': 'MEDINA',
+  'hail': 'HAIL',
+  'tabuk': 'TABUK',
+  'qassim al-rass': 'QASSIM_AL_RASS',
+  'qassim buriday': 'QASSIM_BURIDAH',
+  'qassim buridah': 'QASSIM_BURIDAH',
+  'qassim unaizah': 'QASSIM_UNAIZAH',
+  'al jouf': 'AL_JOUF',
+  'hafar': 'HAFAR',
+  'kuwait': 'KUWAIT',
+};
+
+// ERP warehouses.name → CRM warehouse enum. Anything else (Project X, TBF)
+// deliberately falls through to OTHER.
+const WAREHOUSE_MAP: Record<string, string> = {
+  'dubai warehouse': 'DUBAI_WAREHOUSE',
+  'jeddah warehouse': 'JEDDAH_WAREHOUSE',
+  'dammam warehouse': 'DAMMAM_WAREHOUSE',
+  'riyadh warehouse': 'RIYADH_WAREHOUSE',
+  'medina warehouse': 'MEDINA_WAREHOUSE',
+  'qassim warehouse': 'QASSIM_WAREHOUSE',
+  'hail warehouse': 'HAIL_WAREHOUSE',
+  'tabuk warehouse': 'TABUK_WAREHOUSE',
+  'hafar warehouse': 'HAFAR_WAREHOUSE',
+  'jouf warehouse': 'JOUF_WAREHOUSE',
+  'ksa floranow national hub warehouse': 'KSA_NATIONAL_HUB',
+  'jordan warehouse': 'JORDAN_WAREHOUSE',
+  'kuwait warehouse': 'KUWAIT_WAREHOUSE',
+  'qatar warehouse': 'QATAR_WAREHOUSE',
 };
 
 // ERP user_categories.name → CRM accountCategory enum. "Deleted Customers"
@@ -113,7 +152,7 @@ export const mapWarehouse = (erpValue: string | null): string | null => {
     return null;
   }
 
-  return name === 'dubai warehouse' ? 'DUBAI_WAREHOUSE' : 'OTHER';
+  return WAREHOUSE_MAP[name] ?? 'OTHER';
 };
 
 export const mapBlockedStatus = (

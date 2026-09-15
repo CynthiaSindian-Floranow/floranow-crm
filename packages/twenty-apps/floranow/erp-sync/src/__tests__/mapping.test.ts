@@ -76,16 +76,32 @@ test('payment term display strings map to the enum', () => {
   assert.equal(mapPaymentTerm('10 Days After Delivery'), null);
 });
 
-test('warehouses collapse to the two CRM options', () => {
+test('warehouses map across UAE and KSA; unknown ones become Other', () => {
   assert.equal(mapWarehouse('Dubai Warehouse'), 'DUBAI_WAREHOUSE');
-  assert.equal(mapWarehouse('Riyadh Warehouse'), 'OTHER');
+  assert.equal(mapWarehouse('Riyadh Warehouse'), 'RIYADH_WAREHOUSE');
+  assert.equal(mapWarehouse('Jeddah Warehouse'), 'JEDDAH_WAREHOUSE');
+  assert.equal(mapWarehouse('Hafar WareHouse'), 'HAFAR_WAREHOUSE');
+  assert.equal(
+    mapWarehouse('KSA Floranow National Hub Warehouse'),
+    'KSA_NATIONAL_HUB',
+  );
+  assert.equal(mapWarehouse('Riyadh Project X'), 'OTHER');
+  assert.equal(mapWarehouse('Jeddah TBF'), 'OTHER');
   assert.equal(mapWarehouse(null), null);
 });
 
-test('routes map where known and are dropped where not', () => {
+test('routes map across UAE and KSA and are dropped where unknown', () => {
   assert.equal(mapErpRoute('Dubai Out of City'), 'DUBAI_OUT_OF_CITY');
   assert.equal(mapErpRoute('Internal-UAE'), 'INTERNAL_UAE');
-  assert.equal(mapErpRoute('Jeddah'), null);
+  assert.equal(mapErpRoute('Internal'), 'INTERNAL_UAE');
+  assert.equal(mapErpRoute('Jeddah'), 'JEDDAH');
+  assert.equal(mapErpRoute('Riyadh Central'), 'RIYADH_CENTRAL');
+  assert.equal(mapErpRoute('Al-Khobar'), 'AL_KHOBAR');
+  // The ERP spells it "Buriday"; both spellings resolve.
+  assert.equal(mapErpRoute('Qassim Buriday'), 'QASSIM_BURIDAH');
+  assert.equal(mapErpRoute('Dammam- Deleted'), null);
+  assert.equal(mapErpRoute('Stock-Linking (Internal)'), null);
+  assert.equal(mapErpRoute('Grandiose'), null);
 });
 
 test('blocked state maps to the enum with OTHER as the fallback', () => {
@@ -148,7 +164,7 @@ test('unmappable ERP values are reported, not guessed', () => {
     lead,
     snapshot({
       payment_term: '10 Days After Delivery',
-      route: 'Jeddah',
+      route: 'Grandiose',
       customer_type: 'agent',
     }),
   );
