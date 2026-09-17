@@ -91,6 +91,10 @@ const main = async () => {
       console.log('           ⚠ lead has no owner — Company has no AM');
     }
 
+    if (o.contactWarning !== undefined) {
+      console.log(`           ⚠ ${o.contactWarning}`);
+    }
+
     for (const u of o.unmapped ?? []) {
       console.log(
         `           ⚠ ${u.field}: ERP value "${u.erpValue}" has no CRM option — left empty`,

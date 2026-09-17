@@ -15,6 +15,7 @@ export type LeadOutcome = {
   companyName?: string;
   unmapped?: UnmappedValue[];
   missingOwner?: boolean;
+  contactWarning?: string;
   error?: string;
 };
 
@@ -104,13 +105,21 @@ export const syncQualifiedLeads = async (
       }
 
       let companyId = '(dry-run)';
+      let contactWarning: string | undefined;
 
       if (!dryRun) {
         const company = await twenty.createCompany(fields);
 
         companyId = company.id;
 
-        await linkContact(twenty, lead, snapshot, companyId);
+        // The contact is secondary — a bad phone or email must not leave the
+        // lead stuck in Qualified with an orphaned Company behind it.
+        try {
+          contactWarning = await linkContact(twenty, lead, snapshot, companyId);
+        } catch (error) {
+          contactWarning =
+            error instanceof Error ? error.message : String(error);
+        }
 
         await twenty.updateLead(lead.id, {
           companyId,
@@ -125,6 +134,7 @@ export const syncQualifiedLeads = async (
         companyName: String(fields.name),
         unmapped,
         missingOwner: lead.ownerId === null,
+        contactWarning,
       });
     } catch (error) {
       outcomes.push({
@@ -145,27 +155,28 @@ export const syncQualifiedLeads = async (
 
 // The lead's point of contact is the person the AM already talks to — move
 // them onto the Company. Only when the lead has none is a Person created from
-// the ERP's contact details.
+// the ERP's contact details. Returns a warning when the contact landed in a
+// degraded form.
 const linkContact = async (
   twenty: TwentyClient,
   lead: Lead,
   snapshot: ErpCustomerSnapshot,
   companyId: string,
-): Promise<void> => {
+): Promise<string | undefined> => {
   if (lead.pointOfContactId !== null) {
     await twenty.attachPersonToCompany(lead.pointOfContactId, companyId);
 
-    return;
+    return undefined;
   }
 
   if (!snapshot.email && !snapshot.phone_number) {
-    return;
+    return undefined;
   }
 
   const contactName = (snapshot.name ?? '').trim();
   const [firstName, ...rest] = contactName.split(/\s+/);
 
-  await twenty.createPerson({
+  const personFields = {
     name: {
       firstName: firstName || snapshot.business_name || lead.name,
       lastName: rest.join(' '),
@@ -175,5 +186,24 @@ const linkContact = async (
       ? { primaryPhoneNumber: snapshot.phone_number }
       : undefined,
     companyId,
-  });
+  };
+
+  try {
+    await twenty.createPerson(personFields);
+
+    return undefined;
+  } catch (error) {
+    // ERP phone numbers are not always internationally formatted and Twenty
+    // rejects the invalid ones. The contact still matters — retry without the
+    // phone rather than losing the person.
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (!message.includes('INVALID_PHONE_NUMBER')) {
+      throw error;
+    }
+
+    await twenty.createPerson({ ...personFields, phones: undefined });
+
+    return `contact created without phone — ERP phone "${snapshot.phone_number}" was rejected as invalid`;
+  }
 };
