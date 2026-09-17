@@ -9,6 +9,7 @@ export type LeadOutcome = {
     | 'created' // Company created from the ERP snapshot, lead converted
     | 'attached' // Company with this debtor number already existed
     | 'waitingForErp' // debtor number not in the ERP yet — untouched
+    | 'skippedInternal' // ERP marks the account internal — untouched
     | 'duplicateDebtorNumber' // another qualified lead carries the same number
     | 'error';
   companyId?: string;
@@ -33,7 +34,9 @@ const hasDebtorNumber = (lead: Lead): boolean =>
 // Rules honoured here:
 //   * attach, never create, when the debtor number already has a Company;
 //   * leads whose number the ERP does not know yet are left untouched;
-//   * no filtering by customer type — every lead in scope is processed;
+//   * internal ERP accounts (staff/system users) are skipped and reported —
+//     they are not clients and must not enter the CRM;
+//   * no filtering by customer type (retail/reseller/FOB/CIF all process);
 //   * only sync-owned fields are written (see buildCompanyPayload).
 export const syncQualifiedLeads = async (
   config: SyncConfig,
@@ -62,6 +65,13 @@ export const syncQualifiedLeads = async (
       }
 
       seenDebtorNumbers.add(debtorNumber);
+
+      // Checked before the attach path too: an internal account must not be
+      // provisioned OR converted, even if a Company somehow carries its number.
+      if (erpResult.found.get(debtorNumber)?.internal === true) {
+        outcomes.push({ lead, outcome: 'skippedInternal' });
+        continue;
+      }
 
       const existing = await twenty.findCompanyByDebtorNumber(debtorNumber);
 

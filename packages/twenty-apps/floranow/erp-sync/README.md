@@ -14,8 +14,10 @@ ERP, branch `feat/crm-customer-snapshot-api`.
 
 - **Attach, never duplicate** — a debtor number that already has a Company
   gets the lead linked to it; a second Company is never created.
-- **No account-type filtering** — internal / FOB / CIF / reseller are
-  processed like everyone else; `customerType` is recorded as data.
+- **Internal ERP accounts are skipped** — staff/system users are not clients;
+  their leads are reported (`INTERNAL`) and left untouched. Customer types
+  (retail / reseller / FOB / CIF) all process; `customerType` is recorded as
+  data.
 - **Only sync-owned fields are written.** CRM-owned fields (owner, tier,
   zone, checklists) are set once at provisioning (defaults: Never Ordered,
   Onboarding, protected, AMBER) and never touched again.
@@ -48,6 +50,7 @@ The ERP key is the value of `FLORANOW_API_SHARED_KEY` on the target ERP.
 | `CREATED` | Company created from the ERP snapshot; lead → Converted |
 | `ATTACHED` | Company with that debtor number already existed; lead linked and → Converted |
 | `WAITING` | Debtor number not in the ERP yet — lead left untouched (the watchdog case) |
+| `INTERNAL` | ERP marks the account internal (staff/system) — lead left untouched |
 | `DUPLICATE` | Same debtor number on an earlier lead in this run — needs a human |
 | `ERROR` | Request failed; nothing partial is retried automatically |
 

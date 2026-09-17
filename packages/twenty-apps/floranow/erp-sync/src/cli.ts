@@ -43,6 +43,7 @@ const label: Record<LeadOutcome['outcome'], string> = {
   created: 'CREATED   ',
   attached: 'ATTACHED  ',
   waitingForErp: 'WAITING   ',
+  skippedInternal: 'INTERNAL  ',
   duplicateDebtorNumber: 'DUPLICATE ',
   error: 'ERROR     ',
 };
@@ -75,6 +76,10 @@ const main = async () => {
 
     if (o.outcome === 'waitingForErp') {
       parts.push('— debtor number not in the ERP yet, lead left untouched');
+    }
+
+    if (o.outcome === 'skippedInternal') {
+      parts.push('— ERP marks this account internal, lead left untouched');
     }
 
     if (o.outcome === 'duplicateDebtorNumber') {
