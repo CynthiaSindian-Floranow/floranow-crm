@@ -14,6 +14,9 @@ ERP, branch `feat/crm-customer-snapshot-api`.
 
 - **Attach, never duplicate** — a debtor number that already has a Company
   gets the lead linked to it; a second Company is never created.
+- **People are redirected, never invented** — the lead's point of contact is
+  moved onto the Company; the pipeline never creates Person records. A lead
+  without a point of contact gets a warning so the AM adds one by hand.
 - **Internal ERP accounts are skipped** — staff/system users are not clients;
   their leads are reported (`INTERNAL`) and left untouched. Customer types
   (retail / reseller / FOB / CIF) all process; `customerType` is recorded as

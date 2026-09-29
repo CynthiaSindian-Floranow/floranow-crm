@@ -118,8 +118,4 @@ export class TwentyClient {
   ): Promise<void> {
     await this.request('PATCH', `people/${personId}`, { companyId });
   }
-
-  async createPerson(fields: Record<string, unknown>): Promise<void> {
-    await this.request('POST', 'people', fields);
-  }
 }

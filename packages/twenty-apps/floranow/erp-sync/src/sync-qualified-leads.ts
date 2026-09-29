@@ -1,5 +1,5 @@
 import { type SyncConfig } from './env';
-import { fetchErpCustomers, type ErpCustomerSnapshot } from './erp-client';
+import { fetchErpCustomers } from './erp-client';
 import { buildCompanyPayload, type UnmappedValue } from './mapping';
 import { TwentyClient, type Lead } from './twenty-client';
 
@@ -76,7 +76,16 @@ export const syncQualifiedLeads = async (
       const existing = await twenty.findCompanyByDebtorNumber(debtorNumber);
 
       if (existing !== null) {
+        let attachContactWarning: string | undefined;
+
         if (!dryRun) {
+          try {
+            attachContactWarning = await linkContact(twenty, lead, existing.id);
+          } catch (error) {
+            attachContactWarning =
+              error instanceof Error ? error.message : String(error);
+          }
+
           await twenty.updateLead(lead.id, {
             companyId: existing.id,
             stage: 'CONVERTED',
@@ -89,6 +98,7 @@ export const syncQualifiedLeads = async (
           companyId: existing.id,
           companyName: existing.name,
           missingOwner: lead.ownerId === null,
+          contactWarning: attachContactWarning,
         });
         continue;
       }
@@ -125,7 +135,7 @@ export const syncQualifiedLeads = async (
         // The contact is secondary — a bad phone or email must not leave the
         // lead stuck in Qualified with an orphaned Company behind it.
         try {
-          contactWarning = await linkContact(twenty, lead, snapshot, companyId);
+          contactWarning = await linkContact(twenty, lead, companyId);
         } catch (error) {
           contactWarning =
             error instanceof Error ? error.message : String(error);
@@ -164,56 +174,19 @@ export const syncQualifiedLeads = async (
 };
 
 // The lead's point of contact is the person the AM already talks to — move
-// them onto the Company. Only when the lead has none is a Person created from
-// the ERP's contact details. Returns a warning when the contact landed in a
-// degraded form.
+// them onto the Company. The pipeline never invents Person records (rule per
+// Cynthia, 2026-09-29): a lead without a point of contact just gets a warning
+// so the AM adds the person by hand. Returns that warning, or undefined.
 const linkContact = async (
   twenty: TwentyClient,
   lead: Lead,
-  snapshot: ErpCustomerSnapshot,
   companyId: string,
 ): Promise<string | undefined> => {
-  if (lead.pointOfContactId !== null) {
-    await twenty.attachPersonToCompany(lead.pointOfContactId, companyId);
-
-    return undefined;
+  if (lead.pointOfContactId === null) {
+    return 'lead has no point of contact — no person linked to the Company';
   }
 
-  if (!snapshot.email && !snapshot.phone_number) {
-    return undefined;
-  }
+  await twenty.attachPersonToCompany(lead.pointOfContactId, companyId);
 
-  const contactName = (snapshot.name ?? '').trim();
-  const [firstName, ...rest] = contactName.split(/\s+/);
-
-  const personFields = {
-    name: {
-      firstName: firstName || snapshot.business_name || lead.name,
-      lastName: rest.join(' '),
-    },
-    emails: snapshot.email ? { primaryEmail: snapshot.email } : undefined,
-    phones: snapshot.phone_number
-      ? { primaryPhoneNumber: snapshot.phone_number }
-      : undefined,
-    companyId,
-  };
-
-  try {
-    await twenty.createPerson(personFields);
-
-    return undefined;
-  } catch (error) {
-    // ERP phone numbers are not always internationally formatted and Twenty
-    // rejects the invalid ones. The contact still matters — retry without the
-    // phone rather than losing the person.
-    const message = error instanceof Error ? error.message : String(error);
-
-    if (!message.includes('INVALID_PHONE_NUMBER')) {
-      throw error;
-    }
-
-    await twenty.createPerson({ ...personFields, phones: undefined });
-
-    return `contact created without phone — ERP phone "${snapshot.phone_number}" was rejected as invalid`;
-  }
+  return undefined;
 };
