@@ -514,6 +514,11 @@
             "fieldUniversalIdentifier": "4dc29438-84c7-4242-8045-4322f57466f4",
             "isVisible": true,
             "position": 2
+          },
+          {
+            "fieldUniversalIdentifier": "4662fea5-eef3-4aea-ae67-666f8cae72c7",
+            "isVisible": true,
+            "position": 3
           }
         ]
       }
@@ -866,6 +871,16 @@
             "fieldUniversalIdentifier": "cdf8b1c3-8d33-4ff3-9197-fddf6c161fb3",
             "isVisible": true,
             "position": 3
+          },
+          {
+            "fieldUniversalIdentifier": "b6780866-2da2-4085-b099-767dba25ff3d",
+            "isVisible": true,
+            "position": 4
+          },
+          {
+            "fieldUniversalIdentifier": "0a108f9c-7b38-47be-b9fd-a351b6df7443",
+            "isVisible": true,
+            "position": 5
           }
         ]
       },

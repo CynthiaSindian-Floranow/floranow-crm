@@ -4,66 +4,66 @@
 import { FieldType, defineField } from 'twenty-sdk/define';
 
 export default defineField({
-  universalIdentifier: "4662fea5-eef3-4aea-ae67-666f8cae72c7",
-  objectUniversalIdentifier: "20202020-b374-4779-a561-80086cb2e17f" /* company */,
+  universalIdentifier: "0a108f9c-7b38-47be-b9fd-a351b6df7443",
+  objectUniversalIdentifier: "20202020-9549-49dd-b2b2-883999db8938" /* opportunity */,
   type: FieldType.MULTI_SELECT,
   name: "salesChannels",
   label: "Sales Channels",
-  description: "How this client sells to their own customers",
+  description: "How this prospect sells to their own customers",
   icon: "IconShoppingCart",
   isNullable: true,
   options: [
     {
-      id: "3a16e16b-f3be-4d1e-81c2-f004b46efad4",
+      id: "c553757a-159d-451a-94f6-e5ef5fd28995",
       color: "green",
       label: "Physical Shop",
       value: "PHYSICAL_SHOP",
       position: 0
     },
     {
-      id: "2c6f545a-a7db-4ea9-882e-40b61ca463f4",
+      id: "0eb6808d-2526-473d-81e5-3157a9116e6f",
       color: "turquoise",
       label: "Online Store",
       value: "ONLINE_STORE",
       position: 1
     },
     {
-      id: "4acaf1ee-56f0-4cc4-a1d7-21a390f40ac5",
+      id: "ea81afd2-fd4d-4720-b01d-15878bc0ffa7",
       color: "sky",
       label: "Instagram",
       value: "INSTAGRAM",
       position: 2
     },
     {
-      id: "3f725582-c60e-4da1-ab4e-b3c9e57fc859",
+      id: "a9413b49-62f3-4a3d-80a0-7ef7bf82a4d0",
       color: "blue",
       label: "WhatsApp",
       value: "WHATSAPP",
       position: 3
     },
     {
-      id: "10709f98-595a-4b26-8f43-ac7190b2b667",
+      id: "6cdd1c46-c6eb-47e9-be70-7cc6ff130739",
       color: "purple",
       label: "Phone Orders",
       value: "PHONE_ORDERS",
       position: 4
     },
     {
-      id: "261a0c30-edeb-40a0-9a04-318153afb245",
+      id: "decf52c3-dcda-4e86-8adc-1775c5ceb68a",
       color: "pink",
       label: "Marketplace",
       value: "MARKETPLACE",
       position: 5
     },
     {
-      id: "88ed6cad-9b51-40c1-9e1d-8aab5a0aae6c",
+      id: "8895ee0c-4b39-454e-a7e0-e2ba651fec66",
       color: "red",
       label: "Events & Weddings",
       value: "EVENTS_WEDDINGS",
       position: 6
     },
     {
-      id: "58c942d3-0c3e-4839-9c6f-b0233e20299e",
+      id: "c3360de8-88fb-4a1e-8f1b-bf5c9a8ed16a",
       color: "orange",
       label: "Corporate / B2B",
       value: "CORPORATE",
