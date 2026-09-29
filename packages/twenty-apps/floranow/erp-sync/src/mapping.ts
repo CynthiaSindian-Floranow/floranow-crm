@@ -204,11 +204,10 @@ export type LeadForMapping = {
   vatNumber: string | null;
 };
 
-// Builds the createCompany input. Only sync-owned fields are written — the
-// CRM-owned lifecycle group gets its provisioning defaults here, once, and is
-// never touched again by the pipeline.
-export const buildCompanyPayload = (
-  lead: LeadForMapping,
+// The mirrored commercial group — the fields Job B is allowed to refresh on
+// every run. Shared with provisioning so the two jobs can never disagree on a
+// mapping. Never includes identity keys, name, or CRM-owned lifecycle fields.
+export const buildMirrorFields = (
   erp: ErpCustomerSnapshot,
 ): CompanyPayload => {
   const unmapped: UnmappedValue[] = [];
@@ -222,12 +221,8 @@ export const buildCompanyPayload = (
   };
 
   const fields: Record<string, unknown> = {
-    name: erp.business_name || erp.name || lead.businessName || lead.name,
-    debtorNumber: erp.debtor_number,
-    erpUserId: erp.erp_user_id,
-
     arabicName: erp.arabic_name ?? undefined,
-    vatNumber: erp.vat_number ?? lead.vatNumber ?? undefined,
+    vatNumber: erp.vat_number ?? undefined,
     tradeLicense: erp.trade_license ?? undefined,
 
     customerType: track(
@@ -267,6 +262,44 @@ export const buildCompanyPayload = (
     },
     latitude: toNumber(erp.address.latitude) ?? undefined,
     longitude: toNumber(erp.address.longitude) ?? undefined,
+  };
+
+  // Drop nulls so the API does not receive explicit nulls for SELECT fields.
+  for (const key of Object.keys(fields)) {
+    if (fields[key] === null || fields[key] === undefined) {
+      delete fields[key];
+    }
+  }
+
+  return { fields, unmapped };
+};
+
+// Builds the createCompany input. Only sync-owned fields are written — the
+// CRM-owned lifecycle group gets its provisioning defaults here, once, and is
+// never touched again by the pipeline.
+export const buildCompanyPayload = (
+  lead: LeadForMapping,
+  erp: ErpCustomerSnapshot,
+): CompanyPayload => {
+  const mirror = buildMirrorFields(erp);
+  const unmapped = [...mirror.unmapped];
+
+  const track = (field: string, erpValue: string | null, mapped: unknown) => {
+    if (erpValue !== null && erpValue !== '' && mapped === null) {
+      unmapped.push({ field, erpValue });
+    }
+
+    return mapped;
+  };
+
+  const fields: Record<string, unknown> = {
+    ...mirror.fields,
+
+    name: erp.business_name || erp.name || lead.businessName || lead.name,
+    debtorNumber: erp.debtor_number,
+    erpUserId: erp.erp_user_id,
+
+    vatNumber: erp.vat_number ?? lead.vatNumber ?? undefined,
 
     acquisitionSource: track(
       'acquisitionSource',
@@ -283,7 +316,6 @@ export const buildCompanyPayload = (
     paymentTrack: 'AMBER',
   };
 
-  // Drop nulls so the API does not receive explicit nulls for SELECT fields.
   for (const key of Object.keys(fields)) {
     if (fields[key] === null || fields[key] === undefined) {
       delete fields[key];

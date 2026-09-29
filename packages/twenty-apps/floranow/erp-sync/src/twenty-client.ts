@@ -19,6 +19,16 @@ export type Company = {
   debtorNumber: string | null;
 };
 
+// The company as Job B reads it — the mirror group plus identity. Extra REST
+// fields are tolerated via the index signature; the diff only inspects keys
+// that buildMirrorFields produces.
+export type MirrorCompany = {
+  id: string;
+  name: string;
+  debtorNumber: string | null;
+  [field: string]: unknown;
+};
+
 type RestListResponse<T> = {
   data: Record<string, T[]>;
   pageInfo?: { hasNextPage: boolean; endCursor: string | null };
@@ -110,6 +120,17 @@ export class TwentyClient {
     fields: Record<string, unknown>,
   ): Promise<void> {
     await this.request('PATCH', `opportunities/${leadId}`, fields);
+  }
+
+  async findAllCompanies(): Promise<MirrorCompany[]> {
+    return await this.listAll<MirrorCompany>('companies');
+  }
+
+  async updateCompany(
+    companyId: string,
+    fields: Record<string, unknown>,
+  ): Promise<void> {
+    await this.request('PATCH', `companies/${companyId}`, fields);
   }
 
   async attachPersonToCompany(

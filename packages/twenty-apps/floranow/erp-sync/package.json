@@ -2,14 +2,17 @@
   "name": "floranow-erp-sync",
   "version": "0.1.0",
   "private": true,
-  "description": "Job A — provision CRM Companies from ERP customer snapshots for qualified leads that carry a debtor number, then flip the lead to Converted.",
+  "description": "Job A \u2014 provision CRM Companies from ERP customer snapshots for qualified leads that carry a debtor number, then flip the lead to Converted.",
   "packageManager": "yarn@4.13.0",
   "scripts": {
     "sync": "tsx src/cli.ts",
     "sync:dev": "tsx src/cli.ts --remote dev --dry-run",
     "sync:dev:apply": "tsx src/cli.ts --remote dev --apply",
     "test": "node --import tsx --test src/__tests__/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "mirror": "tsx src/mirror-cli.ts",
+    "mirror:dev": "tsx src/mirror-cli.ts --remote dev --dry-run",
+    "mirror:dev:apply": "tsx src/mirror-cli.ts --remote dev --apply"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

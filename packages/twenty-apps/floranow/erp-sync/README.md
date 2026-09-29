@@ -57,4 +57,31 @@ The ERP key is the value of `FLORANOW_API_SHARED_KEY` on the target ERP.
 | `DUPLICATE` | Same debtor number on an earlier lead in this run — needs a human |
 | `ERROR` | Request failed; nothing partial is retried automatically |
 
+## Job B — the ongoing mirror (phase 1)
+
+`yarn mirror:dev` / `yarn mirror:dev:apply` refreshes the mirrored commercial
+fields (payment term, warehouse, route, category, credit limit, blocked
+status, …) on every Company carrying a debtor number, and stamps
+`lastSyncAt` — the freshness flag. Only changed fields are written; identity,
+name and CRM-owned fields are never touched. Per-company outcomes:
+`UPDATED` · `UNCHANGED` (stamp only) · `NOT-IN-ERP` (debtor number vanished —
+needs a human) · `INTERNAL` · `ERROR`.
+
+Phase 2 (financial mirror — receivables, revenue buckets, order counts)
+needs an aggregates endpoint on the ERP; not built yet.
+
+## Scheduling & triggers
+
+`Jenkinsfile` in this directory defines one parameterized job:
+
+- **Nightly cron** runs Job B (`mirror --apply`) against dev.
+- **Build with Parameters** runs Job A on demand (`JOB=sync`).
+- **Manual trigger from the CRM** (for the support team): enable
+  *Trigger builds remotely* on the Jenkins job with a token, then create a
+  Twenty workflow — manual launch, one HTTP-request step:
+  `POST https://<jenkins>/job/<job-name>/buildWithParameters?token=<token>&JOB=sync&MODE=apply`.
+  Support presses the workflow's Launch button inside the CRM; Jenkins does
+  the rest. (Jenkins credentials needed: `twenty-dev-api-key`,
+  `erp-dev-api-key`.)
+
 `yarn test` runs the mapping unit tests; `yarn typecheck` type-checks.

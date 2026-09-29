@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { type ErpCustomerSnapshot } from '../erp-client';
 import {
   buildCompanyPayload,
+  buildMirrorFields,
   mapAccountCategory,
   mapAcquisitionSource,
   mapBlockedStatus,
@@ -187,4 +188,18 @@ test('no SELECT field is ever sent as an explicit null', () => {
   for (const [key, value] of Object.entries(fields)) {
     assert.notEqual(value, null, `${key} must not be null`);
   }
+});
+
+test('mirror fields never include identity, name, or CRM-owned defaults', () => {
+  const { fields } = buildMirrorFields(snapshot());
+
+  for (const forbidden of [
+    'name', 'debtorNumber', 'erpUserId', 'acquisitionSource',
+    'accountStatus', 'lifecycleStage', 'newClientProtected', 'paymentTrack',
+  ]) {
+    assert.equal(forbidden in fields, false, `${forbidden} must not be mirrored`);
+  }
+
+  assert.equal(fields.warehouse, 'DUBAI_WAREHOUSE');
+  assert.equal(fields.erpBlockedStatus, 'UNBLOCKED');
 });
