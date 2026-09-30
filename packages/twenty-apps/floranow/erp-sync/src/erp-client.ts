@@ -145,3 +145,58 @@ export const fetchErpFinancials = async (
     notFound: body.not_found ?? [],
   };
 };
+
+// Shape returned by GET /api/integration/customers/standing_orders
+export type ErpStandingOrder = {
+  erp_reference: string;
+  product_name: string | null;
+  quantity: number | null;
+  price: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  delivery_day: string | null;
+  frequency_period: string | null;
+  status: string | null;
+  currency: string | null;
+};
+
+export type ErpCustomerStandingOrders = {
+  debtor_number: string;
+  erp_user_id: number;
+  standing_orders: ErpStandingOrder[];
+};
+
+export const fetchErpStandingOrders = async (
+  config: SyncConfig,
+  debtorNumbers: string[],
+): Promise<Map<string, ErpStandingOrder[]>> => {
+  if (debtorNumbers.length === 0) {
+    return new Map();
+  }
+
+  const query = debtorNumbers
+    .map((n) => `debtor_numbers[]=${encodeURIComponent(n)}`)
+    .join('&');
+
+  const response = await fetch(
+    `${config.erpUrl}/api/integration/customers/standing_orders?${query}`,
+    { headers: { 'X-Api-Key': config.erpApiKey } },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `ERP standing orders read failed: HTTP ${response.status} ${await response.text()}`,
+    );
+  }
+
+  const body = (await response.json()) as {
+    success: boolean;
+    data: ErpCustomerStandingOrders[];
+  };
+
+  if (!body.success) {
+    throw new Error('ERP standing orders read reported success: false');
+  }
+
+  return new Map(body.data.map((c) => [c.debtor_number, c.standing_orders]));
+};

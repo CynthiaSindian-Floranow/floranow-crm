@@ -6,6 +6,8 @@ import {
   buildCompanyPayload,
   buildFinancialFields,
   buildMirrorFields,
+  buildStandingOrderFields,
+  mapStandingOrderStatus,
   mapAccountCategory,
   mapAcquisitionSource,
   mapBlockedStatus,
@@ -261,4 +263,41 @@ test('a customer with no orders gets zeros and no dates', () => {
   assert.equal(fields.lastOrderDate, undefined);
   assert.equal(fields.daysSinceLastOrder, undefined);
   assert.deepEqual(fields.totalReceivable, { amountMicros: 0, currencyCode: 'AED' });
+});
+
+test('standing order maps to CRM fields with erpReference as the join key', () => {
+  const { erpReference, fields, unmapped } = buildStandingOrderFields({
+    erp_reference: '18',
+    product_name: 'Sg Phil.red Beauty',
+    quantity: 5,
+    price: '40.0',
+    start_date: '2022-11-01',
+    end_date: '2022-11-30',
+    delivery_day: 'SATURDAY',
+    frequency_period: 'week',
+    status: 'requested',
+  });
+
+  assert.equal(erpReference, '18');
+  assert.equal(fields.name, 'Sg Phil.red Beauty');
+  assert.equal(fields.erpReference, '18');
+  assert.equal(fields.confirmedQuantity, 5);
+  assert.equal(fields.deliveryDay, 'SATURDAY');
+  assert.equal(fields.frequency, 'WEEKLY');
+  assert.equal(fields.status, 'ACTIVE');
+  assert.equal(fields.startDate, '2022-11-01');
+  assert.deepEqual(unmapped, []);
+});
+
+test('terminal ERP statuses map to ENDED; unknown ones are flagged', () => {
+  assert.equal(mapStandingOrderStatus('rejected'), 'ENDED');
+  assert.equal(mapStandingOrderStatus('canceled'), 'ENDED');
+  assert.equal(mapStandingOrderStatus('confirmed'), null);
+
+  const { unmapped } = buildStandingOrderFields({
+    erp_reference: '9', product_name: 'X', quantity: 1, price: null,
+    start_date: null, end_date: null, delivery_day: 'SATURDAY',
+    frequency_period: 'week', status: 'confirmed',
+  });
+  assert.deepEqual(unmapped, [{ field: 'status', erpValue: 'confirmed' }]);
 });

@@ -34,13 +34,20 @@ type RestListResponse<T> = {
   pageInfo?: { hasNextPage: boolean; endCursor: string | null };
 };
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export class TwentyClient {
   constructor(private readonly config: SyncConfig) {}
 
+  // Twenty rate-limits writes (100 per 60s). A bulk child sync can exceed that,
+  // so a 429 is not an error — wait out the window and retry rather than
+  // failing the run and leaving the upsert half done.
   private async request<T>(
     method: string,
     path: string,
     body?: unknown,
+    attempt = 0,
   ): Promise<T> {
     const response = await fetch(`${this.config.twentyUrl}/rest/${path}`, {
       method,
@@ -50,6 +57,17 @@ export class TwentyClient {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
+
+    if (response.status === 429 && attempt < 5) {
+      const retryAfter = Number(response.headers.get('retry-after'));
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : 60_000;
+
+      await sleep(waitMs + 1_000);
+
+      return this.request<T>(method, path, body, attempt + 1);
+    }
 
     if (!response.ok) {
       throw new Error(
@@ -138,5 +156,25 @@ export class TwentyClient {
     companyId: string,
   ): Promise<void> {
     await this.request('PATCH', `people/${personId}`, { companyId });
+  }
+
+  async findStandingOrdersByCompany(
+    companyId: string,
+  ): Promise<Array<{ id: string; erpReference: string | null }>> {
+    return await this.listAll<{ id: string; erpReference: string | null }>(
+      'standingOrders',
+      `companyId[eq]:"${companyId}"`,
+    );
+  }
+
+  async createStandingOrder(fields: Record<string, unknown>): Promise<void> {
+    await this.request('POST', 'standingOrders', fields);
+  }
+
+  async updateStandingOrder(
+    id: string,
+    fields: Record<string, unknown>,
+  ): Promise<void> {
+    await this.request('PATCH', `standingOrders/${id}`, fields);
   }
 }

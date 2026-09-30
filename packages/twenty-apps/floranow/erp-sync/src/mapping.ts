@@ -412,3 +412,100 @@ export const buildFinancialFields = (
 
   return { fields, unmapped };
 };
+
+// Standing orders (phase 3). ERP status REQUESTED means a live arrangement in
+// the ERP; REJECTED/CANCELED are terminal. The CRM lifecycle (DRAFT is a
+// CRM-only proposal state) maps as below; unknown statuses are flagged.
+const STANDING_ORDER_STATUS_MAP: Record<string, string> = {
+  requested: 'ACTIVE',
+  rejected: 'ENDED',
+  canceled: 'ENDED',
+  cancelled: 'ENDED',
+  failed: 'ENDED',
+};
+
+const STANDING_ORDER_DELIVERY_DAYS = new Set([
+  'SATURDAY', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY',
+]);
+
+export const mapStandingOrderStatus = (erpValue: string | null): string | null =>
+  STANDING_ORDER_STATUS_MAP[normalize(erpValue)] ?? null;
+
+// frequency_period WEEK → WEEKLY; the ERP has no bi-weekly cadence today.
+export const mapStandingOrderFrequency = (
+  erpValue: string | null,
+): string | null => (normalize(erpValue) === 'week' ? 'WEEKLY' : null);
+
+export type ErpStandingOrderForMapping = {
+  erp_reference: string;
+  product_name: string | null;
+  quantity: number | null;
+  price: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  delivery_day: string | null;
+  frequency_period: string | null;
+  status: string | null;
+};
+
+export type StandingOrderPayload = {
+  erpReference: string;
+  fields: Record<string, unknown>;
+  unmapped: UnmappedValue[];
+};
+
+// A one-line human summary of the basket, since the CRM tracks the proposal
+// rather than line items.
+const basketSummary = (so: ErpStandingOrderForMapping): string => {
+  const parts = [so.product_name?.trim(), so.quantity ? `x${so.quantity}` : null]
+    .filter(Boolean);
+
+  return parts.join(' ');
+};
+
+export const buildStandingOrderFields = (
+  so: ErpStandingOrderForMapping,
+): StandingOrderPayload => {
+  const unmapped: UnmappedValue[] = [];
+
+  const track = (field: string, erpValue: string | null, mapped: unknown) => {
+    if (erpValue !== null && erpValue !== '' && mapped === null) {
+      unmapped.push({ field, erpValue });
+    }
+
+    return mapped;
+  };
+
+  const deliveryDay =
+    so.delivery_day !== null && STANDING_ORDER_DELIVERY_DAYS.has(so.delivery_day)
+      ? so.delivery_day
+      : null;
+
+  if (so.delivery_day !== null && deliveryDay === null) {
+    unmapped.push({ field: 'deliveryDay', erpValue: so.delivery_day });
+  }
+
+  const fields: Record<string, unknown> = {
+    name: so.product_name?.trim() || `Standing order ${so.erp_reference}`,
+    erpReference: so.erp_reference,
+    basketSummary: basketSummary(so) || undefined,
+    confirmedQuantity: so.quantity ?? undefined,
+    startDate: so.start_date ?? undefined,
+    reviewDate: so.end_date ?? undefined,
+    deliveryDay,
+    frequency: track(
+      'frequency',
+      so.frequency_period,
+      mapStandingOrderFrequency(so.frequency_period),
+    ),
+    status: track('status', so.status, mapStandingOrderStatus(so.status)),
+  };
+
+  for (const key of Object.keys(fields)) {
+    if (fields[key] === null || fields[key] === undefined) {
+      delete fields[key];
+    }
+  }
+
+  return { erpReference: so.erp_reference, fields, unmapped };
+};
