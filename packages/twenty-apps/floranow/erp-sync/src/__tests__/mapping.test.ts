@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { type ErpCustomerSnapshot } from '../erp-client';
 import {
   buildCompanyPayload,
+  buildFinancialFields,
   buildMirrorFields,
   mapAccountCategory,
   mapAcquisitionSource,
@@ -202,4 +203,62 @@ test('mirror fields never include identity, name, or CRM-owned defaults', () => 
 
   assert.equal(fields.warehouse, 'DUBAI_WAREHOUSE');
   assert.equal(fields.erpBlockedStatus, 'UNBLOCKED');
+});
+
+const financials = {
+  receivable: { total: '4500.5', overdue: '1200.0' },
+  receivable_months: { mtd: '300.0', m1: '0.0', m2: '0.0', m3: '900.0' },
+  revenue_months: { mtd: '850.0', m1: '700.0', m2: '0.0', m3: '0.0' },
+  orders: {
+    lifetime_count: 12,
+    first_order_date: '2026-01-10',
+    last_order_date: '2026-09-20',
+    last_order_channel: 'ONLINE',
+  },
+};
+
+test('financial fields land as currency composites with the customer currency', () => {
+  const { fields, unmapped } = buildFinancialFields(
+    financials,
+    'AED',
+    new Date('2026-09-30T00:00:00Z'),
+  );
+
+  assert.deepEqual(fields.totalReceivable, { amountMicros: 4_500_500_000, currencyCode: 'AED' });
+  assert.deepEqual(fields.agingReceivable, { amountMicros: 1_200_000_000, currencyCode: 'AED' });
+  assert.deepEqual(fields.mtdNetRevenue, { amountMicros: 850_000_000, currencyCode: 'AED' });
+  assert.deepEqual(fields.receivableM3, { amountMicros: 900_000_000, currencyCode: 'AED' });
+  assert.equal(fields.orderCountLifetime, 12);
+  assert.equal(fields.firstOrderAt, '2026-01-10');
+  assert.equal(fields.lastOrderDate, '2026-09-20');
+  assert.equal(fields.lastOrderChannel, 'ONLINE');
+  assert.equal(fields.daysSinceLastOrder, 10);
+  assert.deepEqual(unmapped, []);
+});
+
+test('unknown order channels are flagged, never guessed', () => {
+  const { fields, unmapped } = buildFinancialFields(
+    { ...financials, orders: { ...financials.orders, last_order_channel: 'picked_order' } },
+    'SAR',
+  );
+
+  assert.equal(fields.lastOrderChannel, undefined);
+  assert.deepEqual(unmapped, [{ field: 'lastOrderChannel', erpValue: 'picked_order' }]);
+});
+
+test('a customer with no orders gets zeros and no dates', () => {
+  const { fields } = buildFinancialFields(
+    {
+      receivable: { total: '0.0', overdue: '0.0' },
+      receivable_months: { mtd: '0.0', m1: '0.0', m2: '0.0', m3: '0.0' },
+      revenue_months: { mtd: '0.0', m1: '0.0', m2: '0.0', m3: '0.0' },
+      orders: { lifetime_count: 0, first_order_date: null, last_order_date: null, last_order_channel: null },
+    },
+    'AED',
+  );
+
+  assert.equal(fields.orderCountLifetime, 0);
+  assert.equal(fields.lastOrderDate, undefined);
+  assert.equal(fields.daysSinceLastOrder, undefined);
+  assert.deepEqual(fields.totalReceivable, { amountMicros: 0, currencyCode: 'AED' });
 });

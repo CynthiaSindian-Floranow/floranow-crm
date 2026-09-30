@@ -84,3 +84,64 @@ export const fetchErpCustomers = async (
     notFound: body.not_found ?? [],
   };
 };
+
+// Shape returned by GET /api/integration/customers/financials
+// (CrmCustomerFinancialsService).
+export type ErpCustomerFinancials = {
+  debtor_number: string;
+  erp_user_id: number;
+  receivable: { total: string; overdue: string };
+  receivable_months: { mtd: string; m1: string; m2: string; m3: string };
+  revenue_months: { mtd: string; m1: string; m2: string; m3: string };
+  orders: {
+    lifetime_count: number;
+    first_order_date: string | null;
+    last_order_date: string | null;
+    last_order_channel: string | null;
+  };
+  as_of: string;
+};
+
+export type ErpFinancialsResult = {
+  found: Map<string, ErpCustomerFinancials>;
+  notFound: string[];
+};
+
+export const fetchErpFinancials = async (
+  config: SyncConfig,
+  debtorNumbers: string[],
+): Promise<ErpFinancialsResult> => {
+  if (debtorNumbers.length === 0) {
+    return { found: new Map(), notFound: [] };
+  }
+
+  const query = debtorNumbers
+    .map((n) => `debtor_numbers[]=${encodeURIComponent(n)}`)
+    .join('&');
+
+  const response = await fetch(
+    `${config.erpUrl}/api/integration/customers/financials?${query}`,
+    { headers: { 'X-Api-Key': config.erpApiKey } },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `ERP financials read failed: HTTP ${response.status} ${await response.text()}`,
+    );
+  }
+
+  const body = (await response.json()) as {
+    success: boolean;
+    data: ErpCustomerFinancials[];
+    not_found: string[];
+  };
+
+  if (!body.success) {
+    throw new Error('ERP financials read reported success: false');
+  }
+
+  return {
+    found: new Map(body.data.map((c) => [c.debtor_number, c])),
+    notFound: body.not_found ?? [],
+  };
+};

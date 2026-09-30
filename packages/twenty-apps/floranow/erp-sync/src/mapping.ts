@@ -324,3 +324,91 @@ export const buildCompanyPayload = (
 
   return { fields, unmapped };
 };
+
+// Financial mirror (Job B phase 2) — the read-only number fields fed by the
+// ERP's /customers/financials endpoint. Money lands as Twenty CURRENCY
+// composites; the currency code rides in from the customer snapshot since the
+// aggregates themselves are currency-less. lastOrderChannel maps only the two
+// CRM options; IN_SHOP, picked_order and friends are flagged, not guessed.
+const LAST_ORDER_CHANNEL_MAP: Record<string, string> = {
+  online: 'ONLINE',
+  offline: 'OFFLINE',
+};
+
+export const mapLastOrderChannel = (erpValue: string | null): string | null =>
+  LAST_ORDER_CHANNEL_MAP[normalize(erpValue)] ?? null;
+
+const money = (
+  amount: string,
+  currencyCode: string,
+): { amountMicros: number | null; currencyCode: string } => ({
+  amountMicros: toMicros(amount),
+  currencyCode,
+});
+
+export type ErpFinancialsForMapping = {
+  receivable: { total: string; overdue: string };
+  receivable_months: { mtd: string; m1: string; m2: string; m3: string };
+  revenue_months: { mtd: string; m1: string; m2: string; m3: string };
+  orders: {
+    lifetime_count: number;
+    first_order_date: string | null;
+    last_order_date: string | null;
+    last_order_channel: string | null;
+  };
+};
+
+export const buildFinancialFields = (
+  financials: ErpFinancialsForMapping,
+  currencyCode: string,
+  today: Date = new Date(),
+): CompanyPayload => {
+  const unmapped: UnmappedValue[] = [];
+
+  const channel = mapLastOrderChannel(financials.orders.last_order_channel);
+
+  if (financials.orders.last_order_channel !== null && channel === null) {
+    unmapped.push({
+      field: 'lastOrderChannel',
+      erpValue: financials.orders.last_order_channel,
+    });
+  }
+
+  const lastOrderDate = financials.orders.last_order_date;
+  const daysSinceLastOrder =
+    lastOrderDate === null
+      ? undefined
+      : Math.max(
+          0,
+          Math.floor(
+            (today.getTime() - new Date(lastOrderDate).getTime()) / 86_400_000,
+          ),
+        );
+
+  const fields: Record<string, unknown> = {
+    totalReceivable: money(financials.receivable.total, currencyCode),
+    agingReceivable: money(financials.receivable.overdue, currencyCode),
+    receivableMtd: money(financials.receivable_months.mtd, currencyCode),
+    receivableM1: money(financials.receivable_months.m1, currencyCode),
+    receivableM2: money(financials.receivable_months.m2, currencyCode),
+    receivableM3: money(financials.receivable_months.m3, currencyCode),
+    mtdNetRevenue: money(financials.revenue_months.mtd, currencyCode),
+    m1NetRevenue: money(financials.revenue_months.m1, currencyCode),
+    m2NetRevenue: money(financials.revenue_months.m2, currencyCode),
+    m3NetRevenue: money(financials.revenue_months.m3, currencyCode),
+
+    orderCountLifetime: financials.orders.lifetime_count,
+    firstOrderAt: financials.orders.first_order_date ?? undefined,
+    lastOrderDate: lastOrderDate ?? undefined,
+    lastOrderChannel: channel,
+    daysSinceLastOrder,
+  };
+
+  for (const key of Object.keys(fields)) {
+    if (fields[key] === null || fields[key] === undefined) {
+      delete fields[key];
+    }
+  }
+
+  return { fields, unmapped };
+};

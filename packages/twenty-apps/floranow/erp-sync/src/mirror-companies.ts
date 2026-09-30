@@ -1,6 +1,15 @@
 import { type SyncConfig } from './env';
-import { fetchErpCustomers, type ErpCustomerSnapshot } from './erp-client';
-import { buildMirrorFields, type UnmappedValue } from './mapping';
+import {
+  fetchErpCustomers,
+  fetchErpFinancials,
+  type ErpCustomerFinancials,
+  type ErpCustomerSnapshot,
+} from './erp-client';
+import {
+  buildFinancialFields,
+  buildMirrorFields,
+  type UnmappedValue,
+} from './mapping';
 import { TwentyClient, type MirrorCompany } from './twenty-client';
 
 export type CompanyOutcome = {
@@ -56,15 +65,20 @@ export const mirrorCompanies = async (
   ];
 
   const found = new Map<string, ErpCustomerSnapshot>();
+  const financials = new Map<string, ErpCustomerFinancials>();
 
   for (let i = 0; i < debtorNumbers.length; i += ERP_BATCH_SIZE) {
-    const batch = await fetchErpCustomers(
-      config,
-      debtorNumbers.slice(i, i + ERP_BATCH_SIZE),
-    );
+    const slice = debtorNumbers.slice(i, i + ERP_BATCH_SIZE);
+    const batch = await fetchErpCustomers(config, slice);
 
     for (const [key, value] of batch.found) {
       found.set(key, value);
+    }
+
+    const financialsBatch = await fetchErpFinancials(config, slice);
+
+    for (const [key, value] of financialsBatch.found) {
+      financials.set(key, value);
     }
   }
 
@@ -88,6 +102,20 @@ export const mirrorCompanies = async (
       }
 
       const { fields, unmapped } = buildMirrorFields(snapshot);
+
+      // Financial mirror: the aggregates carry no currency, so the money
+      // fields borrow the customer's currency from the snapshot.
+      const customerFinancials = financials.get(debtorNumber);
+
+      if (customerFinancials !== undefined) {
+        const financialPayload = buildFinancialFields(
+          customerFinancials,
+          snapshot.currency || 'AED',
+        );
+
+        Object.assign(fields, financialPayload.fields);
+        unmapped.push(...financialPayload.unmapped);
+      }
 
       const changed: Record<string, unknown> = {};
 

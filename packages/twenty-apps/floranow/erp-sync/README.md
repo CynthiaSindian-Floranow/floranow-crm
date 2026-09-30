@@ -67,8 +67,12 @@ name and CRM-owned fields are never touched. Per-company outcomes:
 `UPDATED` · `UNCHANGED` (stamp only) · `NOT-IN-ERP` (debtor number vanished —
 needs a human) · `INTERNAL` · `ERROR`.
 
-Phase 2 (financial mirror — receivables, revenue buckets, order counts)
-needs an aggregates endpoint on the ERP; not built yet.
+Phase 2 (financial mirror) is included: receivable total/overdue, four
+calendar months of receivable and net revenue, order count/dates/channel and
+daysSinceLastOrder — fed by the ERP's `/customers/financials` endpoint
+(ERP branch `feat/crm-customer-financials-api`). Money lands as CURRENCY
+composites in the customer's currency; unknown order channels are flagged,
+never guessed.
 
 ## Scheduling & triggers
 
