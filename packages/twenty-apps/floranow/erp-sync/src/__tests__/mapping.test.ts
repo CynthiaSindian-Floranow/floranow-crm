@@ -6,6 +6,8 @@ import {
   buildCompanyPayload,
   buildFinancialFields,
   buildMirrorFields,
+  buildIncidentFields,
+  buildOrderEventFields,
   buildStandingOrderFields,
   mapStandingOrderStatus,
   mapAccountCategory,
@@ -300,4 +302,44 @@ test('terminal ERP statuses map to ENDED; unknown ones are flagged', () => {
     frequency_period: 'week', status: 'confirmed',
   });
   assert.deepEqual(unmapped, [{ field: 'status', erpValue: 'confirmed' }]);
+});
+
+test('order event maps channel/value/eventType; unknown channel flagged', () => {
+  const { ref, fields, unmapped } = buildOrderEventFields({
+    order_ref: 'R100', erp_order_id: 5, channel: 'offline', value: '39.9',
+    currency: 'AED', delivered_date: '2024-08-25', event_type: 'DELIVERED',
+  });
+  assert.equal(ref, 'R100');
+  assert.equal(fields.orderRef, 'R100');
+  assert.equal(fields.channel, 'OFFLINE');
+  assert.equal(fields.eventType, 'DELIVERED');
+  assert.deepEqual(fields.value, { amountMicros: 39_900_000, currencyCode: 'AED' });
+  assert.deepEqual(unmapped, []);
+
+  const inShop = buildOrderEventFields({
+    order_ref: 'R2', erp_order_id: 6, channel: 'IN_SHOP', value: null,
+    currency: null, delivered_date: null, event_type: 'CREATED',
+  });
+  assert.equal(inShop.fields.channel, undefined);
+  assert.deepEqual(inShop.unmapped, [{ field: 'channel', erpValue: 'IN_SHOP' }]);
+});
+
+test('incident maps known types; unknown types flagged; blank status = OPEN', () => {
+  const missing = buildIncidentFields({
+    erp_incident_id: 711, incident_type: 'missing', stage: 'packing',
+    status: 'reported', quantity: 3, credited: true, order_ref: 'R9',
+  });
+  assert.equal(missing.fields.erpIncidentId, 711);
+  assert.equal(missing.fields.category, 'MISSING_ITEM');
+  assert.equal(missing.fields.status, 'OPEN');
+  assert.equal(missing.fields.compensationAction, 'CREDIT_NEXT_ORDER');
+
+  const extra = buildIncidentFields({
+    erp_incident_id: 788, incident_type: 'extra', stage: 'packing',
+    status: null, quantity: 1, credited: false, order_ref: null,
+  });
+  assert.equal(extra.fields.category, undefined);
+  assert.equal(extra.fields.status, 'OPEN');
+  assert.equal(extra.fields.compensationAction, 'NONE');
+  assert.deepEqual(extra.unmapped, [{ field: 'category', erpValue: 'extra' }]);
 });

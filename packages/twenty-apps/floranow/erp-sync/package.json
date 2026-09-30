@@ -15,7 +15,11 @@
     "mirror:dev:apply": "tsx src/mirror-cli.ts --remote dev --apply",
     "standing-orders": "tsx src/standing-orders-cli.ts",
     "standing-orders:dev": "tsx src/standing-orders-cli.ts --remote dev --dry-run",
-    "standing-orders:dev:apply": "tsx src/standing-orders-cli.ts --remote dev --apply"
+    "standing-orders:dev:apply": "tsx src/standing-orders-cli.ts --remote dev --apply",
+    "order-events:dev": "tsx src/child-records-cli.ts order-events --remote dev --dry-run",
+    "order-events:dev:apply": "tsx src/child-records-cli.ts order-events --remote dev --apply",
+    "incidents:dev": "tsx src/child-records-cli.ts incidents --remote dev --dry-run",
+    "incidents:dev:apply": "tsx src/child-records-cli.ts incidents --remote dev --apply"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

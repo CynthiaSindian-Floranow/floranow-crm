@@ -200,3 +200,83 @@ export const fetchErpStandingOrders = async (
 
   return new Map(body.data.map((c) => [c.debtor_number, c.standing_orders]));
 };
+
+// GET /api/integration/customers/order_events
+export type ErpOrderEvent = {
+  order_ref: string;
+  erp_order_id: number;
+  channel: string | null;
+  value: string | null;
+  currency: string | null;
+  delivered_date: string | null;
+  event_type: string;
+};
+
+// GET /api/integration/customers/incidents
+export type ErpIncident = {
+  erp_incident_id: number;
+  incident_type: string | null;
+  stage: string | null;
+  status: string | null;
+  quantity: number | null;
+  credited: boolean;
+  order_ref: string | null;
+};
+
+const fetchChildList = async <T>(
+  config: SyncConfig,
+  path: string,
+  key: string,
+  debtorNumbers: string[],
+): Promise<Map<string, T[]>> => {
+  if (debtorNumbers.length === 0) {
+    return new Map();
+  }
+
+  const query = debtorNumbers
+    .map((n) => `debtor_numbers[]=${encodeURIComponent(n)}`)
+    .join('&');
+
+  const response = await fetch(`${config.erpUrl}/${path}?${query}`, {
+    headers: { 'X-Api-Key': config.erpApiKey },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `ERP ${path} read failed: HTTP ${response.status} ${await response.text()}`,
+    );
+  }
+
+  const body = (await response.json()) as {
+    success: boolean;
+    data: Array<{ debtor_number: string } & Record<string, T[]>>;
+  };
+
+  if (!body.success) {
+    throw new Error(`ERP ${path} read reported success: false`);
+  }
+
+  return new Map(body.data.map((row) => [row.debtor_number, row[key] ?? []]));
+};
+
+export const fetchErpOrderEvents = (
+  config: SyncConfig,
+  debtorNumbers: string[],
+): Promise<Map<string, ErpOrderEvent[]>> =>
+  fetchChildList<ErpOrderEvent>(
+    config,
+    'api/integration/customers/order_events',
+    'order_events',
+    debtorNumbers,
+  );
+
+export const fetchErpIncidents = (
+  config: SyncConfig,
+  debtorNumbers: string[],
+): Promise<Map<string, ErpIncident[]>> =>
+  fetchChildList<ErpIncident>(
+    config,
+    'api/integration/customers/incidents',
+    'incidents',
+    debtorNumbers,
+  );

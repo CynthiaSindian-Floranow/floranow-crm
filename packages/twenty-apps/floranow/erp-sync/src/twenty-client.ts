@@ -177,4 +177,30 @@ export class TwentyClient {
   ): Promise<void> {
     await this.request('PATCH', `standingOrders/${id}`, fields);
   }
+
+  // Generic child-record access, keyed by the resource's plural REST path.
+  async findChildrenByCompany(
+    resource: string,
+    companyId: string,
+  ): Promise<Array<{ id: string } & Record<string, unknown>>> {
+    return await this.listAll<{ id: string } & Record<string, unknown>>(
+      resource,
+      `companyId[eq]:"${companyId}"`,
+    );
+  }
+
+  async createChild(
+    resource: string,
+    fields: Record<string, unknown>,
+  ): Promise<void> {
+    await this.request('POST', resource, fields);
+  }
+
+  async updateChild(
+    resource: string,
+    id: string,
+    fields: Record<string, unknown>,
+  ): Promise<void> {
+    await this.request('PATCH', `${resource}/${id}`, fields);
+  }
 }

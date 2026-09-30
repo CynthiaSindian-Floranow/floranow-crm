@@ -509,3 +509,133 @@ export const buildStandingOrderFields = (
 
   return { erpReference: so.erp_reference, fields, unmapped };
 };
+
+// Order events (phase 3). order_type online/offline → CRM channel; anything
+// else is flagged. eventType comes straight from the ERP's derived state.
+const ORDER_CHANNEL_MAP: Record<string, string> = {
+  online: 'ONLINE',
+  offline: 'OFFLINE',
+};
+
+const ORDER_EVENT_TYPES = new Set([
+  'CREATED', 'DISPATCHED', 'DELIVERED', 'RATING_RECEIVED', 'BLOCKED_ATTEMPT',
+]);
+
+export type ErpOrderEventForMapping = {
+  order_ref: string;
+  erp_order_id: number;
+  channel: string | null;
+  value: string | null;
+  currency: string | null;
+  delivered_date: string | null;
+  event_type: string;
+};
+
+export type ChildPayload = {
+  ref: string;
+  fields: Record<string, unknown>;
+  unmapped: UnmappedValue[];
+};
+
+export const buildOrderEventFields = (
+  event: ErpOrderEventForMapping,
+): ChildPayload => {
+  const unmapped: UnmappedValue[] = [];
+
+  const channel = ORDER_CHANNEL_MAP[normalize(event.channel)] ?? null;
+  if (event.channel !== null && channel === null) {
+    unmapped.push({ field: 'channel', erpValue: event.channel });
+  }
+
+  const eventType = ORDER_EVENT_TYPES.has(event.event_type)
+    ? event.event_type
+    : null;
+  if (eventType === null) {
+    unmapped.push({ field: 'eventType', erpValue: event.event_type });
+  }
+
+  const fields: Record<string, unknown> = {
+    name: `Order ${event.order_ref}`,
+    orderRef: event.order_ref,
+    erpOrderId: event.erp_order_id,
+    channel,
+    eventType,
+    value:
+      event.value === null
+        ? undefined
+        : { amountMicros: toMicros(event.value), currencyCode: event.currency || 'AED' },
+    // The ERP's delivered date is what promotes an event to DELIVERED; the CRM
+    // object has no separate delivered-date field, so it is not stored again.
+  };
+
+  for (const key of Object.keys(fields)) {
+    if (fields[key] === null || fields[key] === undefined) {
+      delete fields[key];
+    }
+  }
+
+  return { ref: event.order_ref, fields, unmapped };
+};
+
+// Incidents (phase 3). Only the unambiguous ERP types map; the CRM adds its own
+// categories, so everything else is flagged rather than forced.
+const INCIDENT_CATEGORY_MAP: Record<string, string> = {
+  missing: 'MISSING_ITEM',
+  damaged: 'DAMAGE',
+};
+
+const INCIDENT_STATUS_MAP: Record<string, string> = {
+  reported: 'OPEN',
+  closed: 'RESOLVED',
+};
+
+export type ErpIncidentForMapping = {
+  erp_incident_id: number;
+  incident_type: string | null;
+  stage: string | null;
+  status: string | null;
+  quantity: number | null;
+  credited: boolean;
+  order_ref: string | null;
+};
+
+export const mapIncidentCategory = (erpValue: string | null): string | null =>
+  INCIDENT_CATEGORY_MAP[normalize(erpValue)] ?? null;
+
+export const buildIncidentFields = (
+  incident: ErpIncidentForMapping,
+): ChildPayload => {
+  const unmapped: UnmappedValue[] = [];
+
+  const category = mapIncidentCategory(incident.incident_type);
+  if (incident.incident_type !== null && category === null) {
+    unmapped.push({ field: 'category', erpValue: incident.incident_type });
+  }
+
+  // Blank ERP status is the common case (reported-but-unset) → OPEN.
+  const status =
+    normalize(incident.status) === ''
+      ? 'OPEN'
+      : INCIDENT_STATUS_MAP[normalize(incident.status)] ?? null;
+  if (incident.status !== null && incident.status !== '' && status === null) {
+    unmapped.push({ field: 'status', erpValue: incident.status });
+  }
+
+  const ref = String(incident.erp_incident_id);
+
+  const fields: Record<string, unknown> = {
+    name: `Incident ${ref}`,
+    erpIncidentId: incident.erp_incident_id,
+    category,
+    status: status ?? 'OPEN',
+    compensationAction: incident.credited ? 'CREDIT_NEXT_ORDER' : 'NONE',
+  };
+
+  for (const key of Object.keys(fields)) {
+    if (fields[key] === null || fields[key] === undefined) {
+      delete fields[key];
+    }
+  }
+
+  return { ref, fields, unmapped };
+};
