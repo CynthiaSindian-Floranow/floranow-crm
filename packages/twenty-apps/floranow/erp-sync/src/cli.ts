@@ -43,6 +43,7 @@ const label: Record<LeadOutcome['outcome'], string> = {
   created: 'CREATED   ',
   attached: 'ATTACHED  ',
   waitingForErp: 'WAITING   ',
+  needsOwner: 'NEEDS-OWNER',
   skippedInternal: 'INTERNAL  ',
   duplicateDebtorNumber: 'DUPLICATE ',
   error: 'ERROR     ',
@@ -76,6 +77,10 @@ const main = async () => {
 
     if (o.outcome === 'waitingForErp') {
       parts.push('— debtor number not in the ERP yet, lead left untouched');
+    }
+
+    if (o.outcome === 'needsOwner') {
+      parts.push('— ready, but no owner on the lead; assign an AM then it converts');
     }
 
     if (o.outcome === 'skippedInternal') {
@@ -114,6 +119,7 @@ const main = async () => {
       `${report.outcomes.filter((o) => o.outcome === 'created').length} created · ` +
       `${report.outcomes.filter((o) => o.outcome === 'attached').length} attached · ` +
       `${report.outcomes.filter((o) => o.outcome === 'waitingForErp').length} waiting · ` +
+      `${report.outcomes.filter((o) => o.outcome === 'needsOwner').length} needs-owner · ` +
       `${errors.length} error(s)`,
   );
 

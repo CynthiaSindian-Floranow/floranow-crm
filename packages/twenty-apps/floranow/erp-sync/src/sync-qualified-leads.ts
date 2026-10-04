@@ -9,6 +9,7 @@ export type LeadOutcome = {
     | 'created' // Company created from the ERP snapshot, lead converted
     | 'attached' // Company with this debtor number already existed
     | 'waitingForErp' // debtor number not in the ERP yet — untouched
+    | 'needsOwner' // ready, but the lead has no owner — left Qualified
     | 'skippedInternal' // ERP marks the account internal — untouched
     | 'duplicateDebtorNumber' // another qualified lead carries the same number
     | 'error';
@@ -110,6 +111,15 @@ export const syncQualifiedLeads = async (
         continue;
       }
 
+      // Owner rule (BRD: do not convert until an owner is set). A lead with no
+      // owner would create a Company with no account manager — instead leave
+      // it Qualified so it stays in the "Awaiting Provisioning" view until an
+      // AM is assigned, then it converts on a later run.
+      if (lead.ownerId === null) {
+        outcomes.push({ lead, outcome: 'needsOwner' });
+        continue;
+      }
+
       const { fields, unmapped } = buildCompanyPayload(
         {
           name: lead.name,
@@ -120,9 +130,7 @@ export const syncQualifiedLeads = async (
         snapshot,
       );
 
-      if (lead.ownerId !== null) {
-        fields.accountOwnerId = lead.ownerId;
-      }
+      fields.accountOwnerId = lead.ownerId;
 
       let companyId = '(dry-run)';
       let contactWarning: string | undefined;
