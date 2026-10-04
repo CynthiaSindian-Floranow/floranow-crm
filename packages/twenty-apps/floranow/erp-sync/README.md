@@ -76,16 +76,18 @@ never guessed.
 
 ## Scheduling & triggers
 
-`Jenkinsfile` in this directory defines one parameterized job:
+Scheduled by three Jenkins pipelines in `jenkins/` (dev only; times pinned to
+Asia/Dubai). See the DevOps runbook for setup.
 
-- **Nightly cron** runs Job B (`mirror --apply`) against dev.
-- **Build with Parameters** runs Job A on demand (`JOB=sync`).
-- **Manual trigger from the CRM** (for the support team): enable
-  *Trigger builds remotely* on the Jenkins job with a token, then create a
-  Twenty workflow — manual launch, one HTTP-request step:
-  `POST https://<jenkins>/job/<job-name>/buildWithParameters?token=<token>&JOB=sync&MODE=apply`.
-  Support presses the workflow's Launch button inside the CRM; Jenkins does
-  the rest. (Jenkins credentials needed: `twenty-dev-api-key`,
-  `erp-dev-api-key`.)
+| Lane | File | Command | Schedule (UAE) |
+|---|---|---|---|
+| Provision (Job A) | `jenkins/Jenkinsfile.provision` | `yarn sync:dev:apply` | 11:00 daily + CRM button |
+| Mirror (Job B) | `jenkins/Jenkinsfile.mirror` | `yarn mirror:dev:apply` | 12:00 & 19:00 |
+| Records (Phase 3) | `jenkins/Jenkinsfile.records` | standing-orders, order-events, incidents | 12:30 & 19:30 |
+
+Each posts a one-line result + the run summary to Slack (credential
+`sync-slack-webhook`), with an `@here` alert on failure. The Provision job is
+also triggerable on demand from a CRM workflow button via Jenkins'
+remote-trigger URL.
 
 `yarn test` runs the mapping unit tests; `yarn typecheck` type-checks.

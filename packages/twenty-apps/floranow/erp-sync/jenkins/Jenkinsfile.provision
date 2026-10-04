@@ -1,0 +1,77 @@
+// Lane 1 — PROVISION (Job A). Qualified leads with a debtor number become
+// Companies; the lead flips to Converted. Runs once a day at 11:00 UAE, and
+// on demand via the CRM button (enable "Trigger builds remotely" on this job).
+//
+// Dev only. The sync tool refuses any target but dev until go-live.
+// Credentials (Secret text): twenty-dev-api-key, erp-dev-api-key, sync-slack-webhook
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  triggers {
+    // Timezone pinned so it is 11:00 in Dubai regardless of the server clock.
+    cron('''TZ=Asia/Dubai
+0 11 * * *''')
+  }
+
+  environment {
+    APP_DIR        = 'packages/twenty-apps/floranow/erp-sync'
+    LANE           = 'Provision'
+    TWENTY_DEV_URL = 'https://crm-dev.floranow.com'
+    ERP_DEV_URL    = 'https://erp-dev.floranow.com'
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        dir(env.APP_DIR) {
+          sh 'corepack enable && yarn install --immutable'
+        }
+      }
+    }
+
+    stage('Run') {
+      steps {
+        withCredentials([
+          string(credentialsId: 'twenty-dev-api-key', variable: 'TWENTY_DEV_API_KEY'),
+          string(credentialsId: 'erp-dev-api-key', variable: 'ERP_DEV_API_KEY')
+        ]) {
+          dir(env.APP_DIR) {
+            // pipefail so a failing yarn script fails the stage even through tee.
+            sh 'set -o pipefail; rm -f run.log; yarn sync:dev:apply 2>&1 | tee run.log'
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      script {
+        notifySlack()
+      }
+    }
+  }
+}
+
+// Post a one-line result + the tool's own summary to Slack; @here on failure.
+void notifySlack() {
+  def logFile = "${env.APP_DIR}/run.log"
+  def tail = fileExists(logFile)
+    ? readFile(logFile).readLines().takeRight(20).join('\n')
+    : '(no output captured)'
+  def ok = currentBuild.currentResult == 'SUCCESS'
+  def header = (ok ? ':white_check_mark:' : '<!here> :x:') +
+    " *${env.LANE}* (dev) — ${currentBuild.currentResult}"
+  def msg = "${header}\n```${tail}```\n<${env.BUILD_URL}|open build>"
+  def esc = msg.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+  writeFile file: 'slack.json', text: '{"text":"' + esc + '"}'
+  withCredentials([string(credentialsId: 'sync-slack-webhook', variable: 'HOOK')]) {
+    sh "curl -sS -X POST -H 'Content-type: application/json' --data @slack.json \"\$HOOK\""
+  }
+}
