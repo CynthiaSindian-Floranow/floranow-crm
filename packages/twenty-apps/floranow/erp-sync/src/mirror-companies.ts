@@ -5,6 +5,7 @@ import {
   type ErpCustomerFinancials,
   type ErpCustomerSnapshot,
 } from './erp-client';
+import { changedFieldsOnly } from './diff';
 import {
   buildFinancialFields,
   buildMirrorFields,
@@ -32,19 +33,6 @@ export type MirrorReport = {
 };
 
 const ERP_BATCH_SIZE = 100;
-
-// Composite fields compare by their meaningful parts, scalars by value.
-const valuesDiffer = (current: unknown, next: unknown): boolean => {
-  if (typeof next === 'object' && next !== null) {
-    const currentObject = (current ?? {}) as Record<string, unknown>;
-
-    return Object.entries(next).some(
-      ([key, value]) => (currentObject[key] ?? null) !== (value ?? null),
-    );
-  }
-
-  return (current ?? null) !== (next ?? null);
-};
 
 // Job B phase 1 — refresh the mirrored commercial group on every Company that
 // carries a debtor number, and stamp lastSyncAt. Never touches identity keys,
@@ -117,13 +105,10 @@ export const mirrorCompanies = async (
         unmapped.push(...financialPayload.unmapped);
       }
 
-      const changed: Record<string, unknown> = {};
-
-      for (const [key, value] of Object.entries(fields)) {
-        if (valuesDiffer(company[key as keyof MirrorCompany], value)) {
-          changed[key] = value;
-        }
-      }
+      const changed = changedFieldsOnly(
+        fields,
+        company as Record<string, unknown>,
+      );
 
       const changedFields = Object.keys(changed);
 

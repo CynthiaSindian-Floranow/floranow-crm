@@ -1,3 +1,4 @@
+import { changedFieldsOnly } from './diff';
 import { type SyncConfig } from './env';
 import { type ChildPayload, type UnmappedValue } from './mapping';
 import { TwentyClient, type MirrorCompany } from './twenty-client';
@@ -7,6 +8,7 @@ export type ChildOutcome = {
   debtorNumber: string;
   created: number;
   updated: number;
+  unchanged: number;
   unmapped: UnmappedValue[];
   error?: string;
 };
@@ -78,6 +80,7 @@ export const syncChildRecords = async <TErp>(
       debtorNumber,
       created: 0,
       updated: 0,
+      unchanged: 0,
       unmapped: [],
     };
 
@@ -109,11 +112,24 @@ export const syncChildRecords = async <TErp>(
 
           outcome.created += 1;
         } else {
-          if (!dryRun) {
-            await twenty.updateChild(spec.resource, match.id, fields);
-          }
+          // Diff before writing: a child record that has not changed since the
+          // last run costs no write-call. Without this, every existing record
+          // is re-PATCHed on every run and the write rate limit is burned on
+          // identical data.
+          const changed = changedFieldsOnly(
+            fields,
+            match as Record<string, unknown>,
+          );
 
-          outcome.updated += 1;
+          if (Object.keys(changed).length === 0) {
+            outcome.unchanged += 1;
+          } else {
+            if (!dryRun) {
+              await twenty.updateChild(spec.resource, match.id, changed);
+            }
+
+            outcome.updated += 1;
+          }
         }
       }
     } catch (error) {

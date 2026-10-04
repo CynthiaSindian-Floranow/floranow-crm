@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { changedFieldsOnly } from '../diff';
+
 import { type ErpCustomerSnapshot } from '../erp-client';
 import {
   buildCompanyPayload,
@@ -342,4 +344,44 @@ test('incident maps known types; unknown types flagged; blank status = OPEN', ()
   assert.equal(extra.fields.status, 'OPEN');
   assert.equal(extra.fields.compensationAction, 'NONE');
   assert.deepEqual(extra.unmapped, [{ field: 'category', erpValue: 'extra' }]);
+});
+
+// Diff helper — the change that makes re-runs near-zero-write.
+test('changedFieldsOnly returns only fields that actually differ', () => {
+  const current = {
+    category: 'MISSING_ITEM',
+    status: 'OPEN',
+    value: { amountMicros: 39_900_000, currencyCode: 'AED' },
+  };
+
+  // identical → nothing to write
+  assert.deepEqual(
+    changedFieldsOnly(
+      { category: 'MISSING_ITEM', status: 'OPEN' },
+      current,
+    ),
+    {},
+  );
+
+  // one scalar changed
+  assert.deepEqual(
+    changedFieldsOnly({ status: 'RESOLVED' }, current),
+    { status: 'RESOLVED' },
+  );
+
+  // composite unchanged (same parts) → skipped; composite changed → included
+  assert.deepEqual(
+    changedFieldsOnly(
+      { value: { amountMicros: 39_900_000, currencyCode: 'AED' } },
+      current,
+    ),
+    {},
+  );
+  assert.deepEqual(
+    changedFieldsOnly(
+      { value: { amountMicros: 40_000_000, currencyCode: 'AED' } },
+      current,
+    ),
+    { value: { amountMicros: 40_000_000, currencyCode: 'AED' } },
+  );
 });

@@ -2,17 +2,41 @@ import { loadConfig, type Remote } from './env';
 import {
   fetchErpIncidents,
   fetchErpOrderEvents,
+  fetchErpStandingOrders,
   type ErpIncident,
   type ErpOrderEvent,
+  type ErpStandingOrder,
 } from './erp-client';
-import { buildIncidentFields, buildOrderEventFields } from './mapping';
+import {
+  buildIncidentFields,
+  buildOrderEventFields,
+  buildStandingOrderFields,
+} from './mapping';
 import {
   syncChildRecords,
   type ChildReport,
   type ChildSyncSpec,
 } from './sync-child-records';
 
-const SPECS: Record<string, ChildSyncSpec<ErpOrderEvent> | ChildSyncSpec<ErpIncident>> = {
+const SPECS: Record<
+  string,
+  | ChildSyncSpec<ErpOrderEvent>
+  | ChildSyncSpec<ErpIncident>
+  | ChildSyncSpec<ErpStandingOrder>
+> = {
+  'standing-orders': {
+    label: 'standing orders',
+    resource: 'standingOrders',
+    refField: 'erpReference',
+    fetch: fetchErpStandingOrders,
+    // buildStandingOrderFields returns { erpReference, ... }; the engine wants
+    // the ref under `ref`.
+    build: (so) => {
+      const { erpReference, fields, unmapped } = buildStandingOrderFields(so);
+
+      return { ref: erpReference, fields, unmapped };
+    },
+  } satisfies ChildSyncSpec<ErpStandingOrder>,
   'order-events': {
     label: 'order events',
     resource: 'orderEvents',
@@ -33,7 +57,7 @@ const usage = `
 Phase 3 — mirror a Company's ERP child records into the CRM.
 
 Usage:
-  yarn child-records <order-events|incidents> --remote dev [--dry-run | --apply]
+  yarn child-records <standing-orders|order-events|incidents> --remote dev [--dry-run | --apply]
 `;
 
 const main = async () => {
@@ -48,7 +72,9 @@ const main = async () => {
   const spec = SPECS[which];
 
   if (spec === undefined) {
-    console.error(`Unknown child type "${which}". Use order-events or incidents.`);
+    console.error(
+      `Unknown child type "${which}". Use standing-orders, order-events or incidents.`,
+    );
     process.exit(1);
   }
 
@@ -79,14 +105,16 @@ const main = async () => {
 
   let created = 0;
   let updated = 0;
+  let unchanged = 0;
   const errors: string[] = [];
 
   for (const o of report.outcomes) {
     created += o.created;
     updated += o.updated;
+    unchanged += o.unchanged;
 
     console.log(
-      `${o.debtorNumber.padEnd(14)} ${o.companyName} — ${o.created} created, ${o.updated} updated`,
+      `${o.debtorNumber.padEnd(14)} ${o.companyName} — ${o.created} created, ${o.updated} updated, ${o.unchanged} unchanged`,
     );
 
     const flagged = new Set(o.unmapped.map((u) => `${u.field}:${u.erpValue}`));
@@ -102,7 +130,7 @@ const main = async () => {
 
   console.log(
     `\n${report.outcomes.length} compan(ies) with ${spec.label} · ` +
-      `${created} created · ${updated} updated · ${errors.length} error(s)`,
+      `${created} created · ${updated} updated · ${unchanged} unchanged · ${errors.length} error(s)`,
   );
 
   if (errors.length > 0) {
