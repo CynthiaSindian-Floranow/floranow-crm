@@ -183,6 +183,10 @@ export const fetchErpStandingOrders = async (
     { headers: { 'X-Api-Key': config.erpApiKey } },
   );
 
+  if (response.status === 404) {
+    return new Map();
+  }
+
   if (!response.ok) {
     throw new Error(
       `ERP standing orders read failed: HTTP ${response.status} ${await response.text()}`,
@@ -240,6 +244,10 @@ const fetchChildList = async <T>(
   const response = await fetch(`${config.erpUrl}/${path}?${query}`, {
     headers: { 'X-Api-Key': config.erpApiKey },
   });
+
+  if (response.status === 404) {
+    return new Map();
+  }
 
   if (!response.ok) {
     throw new Error(
