@@ -8,5 +8,15 @@
       "labelPlural": "Leads",
       "labelSingular": "Lead"
     }
+  },
+  {
+    "kind": "field",
+    "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+    "objectName": "company",
+    "fieldUniversalIdentifier": "20202020-add3-4658-8e23-d70dccb6d0ec",
+    "fieldName": "opportunities",
+    "overrides": {
+      "label": "Leads"
+    }
   }
 ]

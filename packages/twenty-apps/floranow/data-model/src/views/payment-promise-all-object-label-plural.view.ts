@@ -57,6 +57,13 @@ export default defineView({
       isVisible: true,
       size: 150,
       position: 5
+    },
+    {
+      universalIdentifier: "216c25f7-efd2-428a-a253-d9df536ee160",
+      fieldMetadataUniversalIdentifier: "c31868c9-638f-5ebe-8d70-b4eeb7c4df23",
+      isVisible: true,
+      size: 100,
+      position: 6
     }
   ]
 });

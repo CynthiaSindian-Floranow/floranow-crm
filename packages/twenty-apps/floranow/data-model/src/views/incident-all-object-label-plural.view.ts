@@ -62,8 +62,15 @@ export default defineView({
       universalIdentifier: "801a16e4-00eb-5f8b-9a4e-9295272a58b9",
       fieldMetadataUniversalIdentifier: "69fbbab6-7cc0-5fe2-9512-30a46024259d",
       isVisible: true,
-      size: 150,
+      size: 114,
       position: 6
+    },
+    {
+      universalIdentifier: "25db31c7-9628-42ec-b396-c6e737a5f0ed",
+      fieldMetadataUniversalIdentifier: "35582677-183a-568e-9013-4cacf47b4d72",
+      isVisible: true,
+      size: 137,
+      position: 7
     }
   ]
 });
