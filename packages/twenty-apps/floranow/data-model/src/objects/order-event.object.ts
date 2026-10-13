@@ -44,6 +44,20 @@ export default defineObject({
           label: "Offline",
           value: "OFFLINE",
           position: 1
+        },
+        {
+          id: "f76f7e1f-4067-4e1f-9aa2-9d06460baeef",
+          color: "blue",
+          label: "In Shop",
+          value: "IN_SHOP",
+          position: 2
+        },
+        {
+          id: "b1ca2b0b-a720-4c43-a0fe-3e2df70d19a9",
+          color: "purple",
+          label: "Additional",
+          value: "ADDITIONAL",
+          position: 3
         }
       ]
     },

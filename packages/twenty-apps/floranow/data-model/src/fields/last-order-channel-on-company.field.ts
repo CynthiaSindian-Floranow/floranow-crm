@@ -26,6 +26,20 @@ export default defineField({
       label: "Offline",
       value: "OFFLINE",
       position: 1
+    },
+    {
+      id: "e2ffd37c-9382-4e36-ba66-d5772bc015be",
+      color: "blue",
+      label: "In Shop",
+      value: "IN_SHOP",
+      position: 2
+    },
+    {
+      id: "eccc659e-0614-4092-a4ff-90fc0b324276",
+      color: "purple",
+      label: "Additional",
+      value: "ADDITIONAL",
+      position: 3
     }
   ]
 });

@@ -236,6 +236,13 @@ export default defineField({
       label: "Kuwait",
       value: "KUWAIT",
       position: 31
+    },
+    {
+      id: "f4a9bbf7-6967-4c79-a572-d0465b23ce11",
+      color: "sky",
+      label: "NE 04",
+      value: "NE_04",
+      position: 32
     }
   ]
 });

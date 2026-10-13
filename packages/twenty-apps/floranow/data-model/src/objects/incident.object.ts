@@ -71,6 +71,13 @@ export default defineObject({
           label: "Cod Violation",
           value: "COD_VIOLATION",
           position: 6
+        },
+        {
+          id: "ef9199fe-46d9-4e0e-8672-df629b5da1b1",
+          color: "yellow",
+          label: "Extra",
+          value: "EXTRA",
+          position: 7
         }
       ]
     },
