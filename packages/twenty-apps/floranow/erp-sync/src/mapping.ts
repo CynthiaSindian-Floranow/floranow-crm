@@ -78,6 +78,7 @@ const ERP_ROUTE_MAP: Record<string, string> = {
   'al jouf': 'AL_JOUF',
   'hafar': 'HAFAR',
   'kuwait': 'KUWAIT',
+  'ne 04': 'NE_04',
 };
 
 // ERP warehouses.name → CRM warehouse enum. Anything else (Project X, TBF)
@@ -333,6 +334,8 @@ export const buildCompanyPayload = (
 const LAST_ORDER_CHANNEL_MAP: Record<string, string> = {
   online: 'ONLINE',
   offline: 'OFFLINE',
+  in_shop: 'IN_SHOP',
+  additional: 'ADDITIONAL',
 };
 
 export const mapLastOrderChannel = (erpValue: string | null): string | null =>
@@ -515,6 +518,8 @@ export const buildStandingOrderFields = (
 const ORDER_CHANNEL_MAP: Record<string, string> = {
   online: 'ONLINE',
   offline: 'OFFLINE',
+  in_shop: 'IN_SHOP',
+  additional: 'ADDITIONAL',
 };
 
 const ORDER_EVENT_TYPES = new Set([
@@ -582,6 +587,7 @@ export const buildOrderEventFields = (
 const INCIDENT_CATEGORY_MAP: Record<string, string> = {
   missing: 'MISSING_ITEM',
   damaged: 'DAMAGE',
+  extra: 'EXTRA',
 };
 
 const INCIDENT_STATUS_MAP: Record<string, string> = {

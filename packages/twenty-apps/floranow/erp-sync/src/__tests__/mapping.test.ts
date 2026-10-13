@@ -322,8 +322,8 @@ test('order event maps channel/value/eventType; unknown channel flagged', () => 
     order_ref: 'R2', erp_order_id: 6, channel: 'IN_SHOP', value: null,
     currency: null, delivered_date: null, event_type: 'CREATED',
   });
-  assert.equal(inShop.fields.channel, undefined);
-  assert.deepEqual(inShop.unmapped, [{ field: 'channel', erpValue: 'IN_SHOP' }]);
+  assert.equal(inShop.fields.channel, 'IN_SHOP');
+  assert.deepEqual(inShop.unmapped, []);
 });
 
 test('incident maps known types; unknown types flagged; blank status = OPEN', () => {
@@ -340,10 +340,10 @@ test('incident maps known types; unknown types flagged; blank status = OPEN', ()
     erp_incident_id: 788, incident_type: 'extra', stage: 'packing',
     status: null, quantity: 1, credited: false, order_ref: null,
   });
-  assert.equal(extra.fields.category, undefined);
+  assert.equal(extra.fields.category, 'EXTRA');
   assert.equal(extra.fields.status, 'OPEN');
   assert.equal(extra.fields.compensationAction, 'NONE');
-  assert.deepEqual(extra.unmapped, [{ field: 'category', erpValue: 'extra' }]);
+  assert.deepEqual(extra.unmapped, []);
 });
 
 // Diff helper — the change that makes re-runs near-zero-write.
