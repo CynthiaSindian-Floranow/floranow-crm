@@ -74,21 +74,6 @@ msgid "Update your subscription"
 msgstr "Ενημερώστε τη συνδρομή σας"
 
 #. js-lingui-explicit-id
-#: src/emails/send-invite-link.email.tsx
-msgid "Join your team on Twenty"
-msgstr "Συμμετέχετε στην ομάδα σας στο Twenty"
-
-#. js-lingui-explicit-id
-#: src/emails/send-invite-link.email.tsx
-msgid "{senderName} (<0>{senderEmail}</0>) has invited you to join a workspace called <1>{workspaceName}</1>."
-msgstr "{senderName} (<0>{senderEmail}</0>) σας έχει προσκαλέσει να συμμετάσχετε σε έναν χώρο εργασίας που ονομάζεται <1>{workspaceName}</1>."
-
-#. js-lingui-explicit-id
-#: src/emails/send-invite-link.email.tsx
-msgid "Accept invite"
-msgstr "Αποδοχή πρόσκλησης"
-
-#. js-lingui-explicit-id
 #: src/emails/server-admin-access-changed.email.tsx
 msgid "Enabled"
 msgstr ""
@@ -124,29 +109,19 @@ msgid "Verify Email"
 msgstr "Επαληθεύστε το Email"
 
 #. js-lingui-explicit-id
-#: src/emails/password-reset-link.email.tsx
-msgid "Reset your password 🗝"
-msgstr "Επαναφέρετε τον κωδικό σας 🗝"
+#: src/emails/send-invite-link.email.tsx
+msgid "Join your team on Twenty"
+msgstr "Συμμετέχετε στην ομάδα σας στο Twenty"
 
 #. js-lingui-explicit-id
-#: src/emails/password-reset-link.email.tsx
-msgid "Set your password 🗝"
-msgstr "Ορίστε τον κωδικό πρόσβασής σας 🗝"
+#: src/emails/send-invite-link.email.tsx
+msgid "{senderName} (<0>{senderEmail}</0>) has invited you to join a workspace called <1>{workspaceName}</1>."
+msgstr "{senderName} (<0>{senderEmail}</0>) σας έχει προσκαλέσει να συμμετάσχετε σε έναν χώρο εργασίας που ονομάζεται <1>{workspaceName}</1>."
 
 #. js-lingui-explicit-id
-#: src/emails/password-reset-link.email.tsx
-msgid "Reset"
-msgstr "Επαναφορά"
-
-#. js-lingui-explicit-id
-#: src/emails/password-reset-link.email.tsx
-msgid "Set"
-msgstr "Ορίστε"
-
-#. js-lingui-explicit-id
-#: src/emails/password-reset-link.email.tsx
-msgid "This link is only valid for the next {duration}. If the link does not work, you can use the login verification link directly:"
-msgstr "Αυτός ο σύνδεσμος ισχύει μόνο για τις επόμενες {duration}. Εάν ο σύνδεσμος δεν λειτουργεί, μπορείτε να χρησιμοποιήσετε τον σύνδεσμο επαλήθευσης σύνδεσης απευθείας:"
+#: src/emails/send-invite-link.email.tsx
+msgid "Accept invite"
+msgstr "Αποδοχή πρόσκλησης"
 
 #. js-lingui-explicit-id
 #: src/emails/password-update-notify.email.tsx
@@ -167,16 +142,6 @@ msgstr "Εάν δεν έχετε προβεί εσείς σε αυτήν την 
 #: src/emails/password-update-notify.email.tsx
 msgid "Connect to Twenty"
 msgstr "Συνδεθείτε στο Twenty"
-
-#. js-lingui-explicit-id
-#: src/components/WhatIsTwenty.tsx
-msgid "What is Floranow?"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/components/WhatIsTwenty.tsx
-msgid "It's the online floral marketplace CRM, helping businesses manage their customer data and relationships efficiently."
-msgstr ""
 
 #. js-lingui-explicit-id
 #: src/emails/clean-suspended-workspace.email.tsx
@@ -202,6 +167,41 @@ msgstr "Εάν επιθυμείτε να χρησιμοποιήσετε ξανά
 #: src/emails/clean-suspended-workspace.email.tsx
 msgid "Create a new workspace"
 msgstr "Δημιουργία νέου χώρου εργασίας"
+
+#. js-lingui-explicit-id
+#: src/emails/password-reset-link.email.tsx
+msgid "Reset your password 🗝"
+msgstr "Επαναφέρετε τον κωδικό σας 🗝"
+
+#. js-lingui-explicit-id
+#: src/emails/password-reset-link.email.tsx
+msgid "Set your password 🗝"
+msgstr "Ορίστε τον κωδικό πρόσβασής σας 🗝"
+
+#. js-lingui-explicit-id
+#: src/emails/password-reset-link.email.tsx
+msgid "Reset"
+msgstr "Επαναφορά"
+
+#. js-lingui-explicit-id
+#: src/emails/password-reset-link.email.tsx
+msgid "Set"
+msgstr "Ορίστε"
+
+#. js-lingui-explicit-id
+#: src/emails/password-reset-link.email.tsx
+msgid "This link is only valid for the next {duration}. If the link does not work, you can use the login verification link directly:"
+msgstr "Αυτός ο σύνδεσμος ισχύει μόνο για τις επόμενες {duration}. Εάν ο σύνδεσμος δεν λειτουργεί, μπορείτε να χρησιμοποιήσετε τον σύνδεσμο επαλήθευσης σύνδεσης απευθείας:"
+
+#. js-lingui-explicit-id
+#: src/components/WhatIsTwenty.tsx
+msgid "What is Floranow?"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/WhatIsTwenty.tsx
+msgid "It's the online floral marketplace CRM, helping businesses manage their customer data and relationships efficiently."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/Footer.tsx
