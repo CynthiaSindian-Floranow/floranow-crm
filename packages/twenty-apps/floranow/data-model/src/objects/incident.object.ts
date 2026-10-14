@@ -78,6 +78,20 @@ export default defineObject({
           label: "Extra",
           value: "EXTRA",
           position: 7
+        },
+        {
+          id: "60ebe8c5-b6be-4c0d-a7e3-83a50bda62af",
+          color: "orange",
+          label: "Incorrect Item",
+          value: "INCORRECT_ITEM",
+          position: 8
+        },
+        {
+          id: "086c4098-e333-4020-bfd4-bab13e6b2ed3",
+          color: "gray",
+          label: "Returned",
+          value: "RETURNED",
+          position: 9
         }
       ]
     },
