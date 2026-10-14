@@ -25,9 +25,10 @@ const parseArgs = (): { remote: Remote; dryRun: boolean } => {
   const remoteIndex = args.indexOf('--remote');
   const remote = remoteIndex === -1 ? 'dev' : args[remoteIndex + 1];
 
-  // Same targets as Job A: dev and prod (go-live approved 14 Oct 2026).
   if (remote !== 'dev' && remote !== 'prod') {
-    console.error(`Remote "${remote}" is not a configured target (dev | prod).`);
+    console.error(
+      `Remote "${remote}" is not allowed — this tool only runs against dev or prod.`,
+    );
     process.exit(1);
   }
 

@@ -65,3 +65,7 @@ output/playwright/
 screenshots/
 !**/public/screenshots/
 !**/assets/screenshots/
+
+My-CLAUDE.md
+tasks/
+

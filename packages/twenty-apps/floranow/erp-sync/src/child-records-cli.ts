@@ -82,7 +82,9 @@ const main = async () => {
   const remote = (remoteIndex === -1 ? 'dev' : args[remoteIndex + 1]) as Remote;
 
   if (remote !== 'dev' && remote !== 'prod') {
-    console.error(`Remote "${remote}" is not a configured target (dev | prod).`);
+    console.error(
+      `Remote "${remote}" is not allowed — this tool only runs against dev or prod.`,
+    );
     process.exit(1);
   }
 
