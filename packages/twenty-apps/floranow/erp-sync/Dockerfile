@@ -14,7 +14,7 @@ WORKDIR /app
 COPY package.json yarn.lock .yarnrc.yml tsconfig.json ./
 
 # Install dependencies immutably
-RUN yarn install --immutable
+RUN yarn install
 
 # Copy application source code
 COPY src ./src
