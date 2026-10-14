@@ -36,6 +36,10 @@ const PAYMENT_TERM_MAP: Record<string, string> = {
   '15th next month': 'NM_15TH',
   '25th next month': 'NM_25TH',
   '28th next month': 'NM_28TH',
+  'on the 7th of the next month': 'NM_7TH',
+  'on the 15th of the next month': 'NM_15TH',
+  'on the 25th of the next month': 'NM_25TH',
+  'on the 28th of the next month': 'NM_28TH',
   'without invoicing': 'WITHOUT_INVOICING',
 };
 
@@ -588,6 +592,8 @@ const INCIDENT_CATEGORY_MAP: Record<string, string> = {
   missing: 'MISSING_ITEM',
   damaged: 'DAMAGE',
   extra: 'EXTRA',
+  incorrect_item: 'INCORRECT_ITEM',
+  returned: 'RETURNED',
 };
 
 const INCIDENT_STATUS_MAP: Record<string, string> = {

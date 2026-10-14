@@ -25,11 +25,10 @@ const parseArgs = (): { remote: Remote; dryRun: boolean } => {
   const remoteIndex = args.indexOf('--remote');
   const remote = remoteIndex === -1 ? 'dev' : args[remoteIndex + 1];
 
-  // Deliberate guardrail: prod stays untouched until dev is verified.
-  if (remote !== 'dev') {
-    console.error(
-      `Remote "${remote}" is not allowed yet — this tool only runs against dev for now.`,
-    );
+  // Dev verified end-to-end and prod go-live approved (14 Oct 2026):
+  // dev and prod are both allowed; anything else is refused.
+  if (remote !== 'dev' && remote !== 'prod') {
+    console.error(`Remote "${remote}" is not a configured target (dev | prod).`);
     process.exit(1);
   }
 
