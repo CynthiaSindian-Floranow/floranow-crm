@@ -15,6 +15,7 @@ import {
   computeLifecycleStage,
   computeProtectedClear,
   shouldCreateInactivityTask,
+  isCodViolation,
   mapStandingOrderStatus,
   mapAccountCategory,
   mapAcquisitionSource,
@@ -455,4 +456,14 @@ test('inactivity nudge (item 5): fires in the 21-45 window, only once eligible, 
   assert.equal(shouldCreateInactivityTask(null, 0, 25), false);
   assert.equal(shouldCreateInactivityTask(null, null, 25), false);
   assert.equal(shouldCreateInactivityTask(null, 5, null), false);
+});
+
+test('COD violation (item 10): only COD accounts with a positive balance', () => {
+  assert.equal(isCodViolation('COD', '4235.12'), true);
+  assert.equal(isCodViolation('COD', '0.01'), true);
+  assert.equal(isCodViolation('COD', '0.0'), false);
+  assert.equal(isCodViolation('COD', null), false);
+  assert.equal(isCodViolation('COD', 'not-a-number'), false);
+  assert.equal(isCodViolation('NET30', '4235.12'), false);
+  assert.equal(isCodViolation(null, '4235.12'), false);
 });

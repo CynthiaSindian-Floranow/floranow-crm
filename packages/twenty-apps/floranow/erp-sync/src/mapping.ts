@@ -280,6 +280,22 @@ export const shouldCreateInactivityTask = (
   daysSinceLastOrder >= 21 &&
   daysSinceLastOrder <= 45;
 
+// COD zero-balance rule (BRD UC-20, backlog item 10): a Cash-on-Delivery
+// account by definition owes nothing — any balance is an operations failure
+// to surface the day it appears. True = a violation exists right now.
+export const isCodViolation = (
+  paymentTermMapped: string | null,
+  receivableTotal: string | null,
+): boolean => {
+  if (paymentTermMapped !== 'COD') {
+    return false;
+  }
+
+  const total = Number.parseFloat(receivableTotal ?? '');
+
+  return Number.isFinite(total) && total > 0;
+};
+
 // Lead.source and Company.acquisitionSource share values except SCRAPE_SOCIAL,
 // which only exists on the lead.
 export const mapAcquisitionSource = (

@@ -12,6 +12,8 @@ import {
   computeAccountStatus,
   computeLifecycleStage,
   computeProtectedClear,
+  isCodViolation,
+  mapPaymentTerm,
   shouldCreateInactivityTask,
   type UnmappedValue,
 } from './mapping';
@@ -35,11 +37,17 @@ export type InactivityTaskOutcome = {
   outcome: 'created' | 'wouldCreate' | 'noOwner';
 };
 
+export type CodIncidentOutcome = {
+  companyName: string;
+  outcome: 'created' | 'wouldCreate' | 'resolved' | 'wouldResolve';
+};
+
 export type MirrorReport = {
   dryRun: boolean;
   totalCompanies: number;
   outcomes: CompanyOutcome[];
   inactivityTasks: InactivityTaskOutcome[];
+  codIncidents: CodIncidentOutcome[];
 };
 
 const ERP_BATCH_SIZE = 100;
@@ -83,6 +91,7 @@ export const mirrorCompanies = async (
   const syncStamp = new Date().toISOString();
   const outcomes: CompanyOutcome[] = [];
   const inactivityTasks: InactivityTaskOutcome[] = [];
+  const codIncidents: CodIncidentOutcome[] = [];
 
   for (const company of companies) {
     const debtorNumber = company.debtorNumber!.trim();
@@ -183,6 +192,52 @@ export const mirrorCompanies = async (
             }
           }
         }
+
+        // COD zero-balance rule (item 10): a COD account with a balance gets
+        // one open High incident the day it appears; it resolves itself the
+        // run the balance returns to zero. One open incident per account.
+        const violation = isCodViolation(
+          mapPaymentTerm(snapshot.payment_term),
+          customerFinancials.receivable.total,
+        );
+
+        const openCodIncident = (
+          await twenty.findChildrenByCompany('incidents', company.id)
+        ).find(
+          (incident) =>
+            incident.category === 'COD_VIOLATION' &&
+            incident.status === 'OPEN',
+        );
+
+        if (violation && openCodIncident === undefined) {
+          if (dryRun) {
+            codIncidents.push({
+              companyName: company.name,
+              outcome: 'wouldCreate',
+            });
+          } else {
+            await twenty.createChild('incidents', {
+              name: `COD violation — ${company.name}`,
+              category: 'COD_VIOLATION',
+              severity: 'HIGH',
+              status: 'OPEN',
+              companyId: company.id,
+            });
+            codIncidents.push({ companyName: company.name, outcome: 'created' });
+          }
+        } else if (!violation && openCodIncident !== undefined) {
+          if (dryRun) {
+            codIncidents.push({
+              companyName: company.name,
+              outcome: 'wouldResolve',
+            });
+          } else {
+            await twenty.updateChild('incidents', openCodIncident.id, {
+              status: 'RESOLVED',
+            });
+            codIncidents.push({ companyName: company.name, outcome: 'resolved' });
+          }
+        }
       }
 
       // Protected window (D3): ends at day 60 after creation, and only then.
@@ -227,7 +282,13 @@ export const mirrorCompanies = async (
     }
   }
 
-  return { dryRun, totalCompanies: companies.length, outcomes, inactivityTasks };
+  return {
+    dryRun,
+    totalCompanies: companies.length,
+    outcomes,
+    inactivityTasks,
+    codIncidents,
+  };
 };
 
 // An account has at most one open inactivity nudge at a time; a Done task
