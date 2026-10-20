@@ -144,6 +144,45 @@ export class TwentyClient {
     return await this.listAll<MirrorCompany>('companies');
   }
 
+  // --- inactivity nudge tasks (backlog item 5) ---
+
+  async findTaskIdsForCompany(companyId: string): Promise<string[]> {
+    const targets = await this.listAll<{ taskId: string | null }>(
+      'taskTargets',
+      `targetCompanyId[eq]:${companyId}`,
+    );
+
+    return targets
+      .map((t) => t.taskId)
+      .filter((id): id is string => typeof id === 'string' && id !== '');
+  }
+
+  async findTask(
+    taskId: string,
+  ): Promise<{ id: string; title: string | null; status: string | null } | null> {
+    const tasks = await this.listAll<{
+      id: string;
+      title: string | null;
+      status: string | null;
+    }>('tasks', `id[eq]:${taskId}`);
+
+    return tasks[0] ?? null;
+  }
+
+  async createTask(fields: Record<string, unknown>): Promise<{ id: string }> {
+    const response = await this.request<{ data: { createTask: { id: string } } }>(
+      'POST',
+      'tasks',
+      fields,
+    );
+
+    return response.data.createTask;
+  }
+
+  async createTaskTarget(taskId: string, companyId: string): Promise<void> {
+    await this.request('POST', 'taskTargets', { taskId, targetCompanyId: companyId });
+  }
+
   async updateCompany(
     companyId: string,
     fields: Record<string, unknown>,

@@ -264,6 +264,22 @@ export const computeLifecycleStage = (
   return (lifetimeOrderCount ?? 0) >= 3 ? 'RETENTION' : null;
 };
 
+// Inactivity nudge (Ops Manual SOP-22, backlog item 5): when an account that
+// has ordered before crosses 21 quiet days with no sub-tag, the owner gets a
+// task to record the reason. The 45-day ceiling is the rollout cutoff decided
+// on 20 Oct 2026: accounts already long-quiet at rollout never get an
+// auto-task — the clock only watches accounts going quiet from now on.
+export const shouldCreateInactivityTask = (
+  subTag: unknown,
+  lifetimeOrderCount: number | null,
+  daysSinceLastOrder: number | null,
+): boolean =>
+  (subTag === null || subTag === undefined || subTag === '') &&
+  (lifetimeOrderCount ?? 0) > 0 &&
+  daysSinceLastOrder !== null &&
+  daysSinceLastOrder >= 21 &&
+  daysSinceLastOrder <= 45;
+
 // Lead.source and Company.acquisitionSource share values except SCRAPE_SOCIAL,
 // which only exists on the lead.
 export const mapAcquisitionSource = (

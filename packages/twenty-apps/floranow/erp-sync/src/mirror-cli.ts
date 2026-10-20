@@ -91,6 +91,17 @@ const main = async () => {
     }
   }
 
+  for (const t of report.inactivityTasks) {
+    const note =
+      t.outcome === 'noOwner'
+        ? `TASK SKIPPED — ${t.companyName} crossed 21 quiet days but has no owner`
+        : t.outcome === 'wouldCreate'
+          ? `TASK (dry-run) — would nudge the owner of ${t.companyName} to set the inactivity reason`
+          : `TASK created — "Set inactivity reason — ${t.companyName}" assigned to the owner (due +2 days)`;
+
+    console.log(note);
+  }
+
   const count = (outcome: CompanyOutcome['outcome']) =>
     report.outcomes.filter((o) => o.outcome === outcome).length;
 

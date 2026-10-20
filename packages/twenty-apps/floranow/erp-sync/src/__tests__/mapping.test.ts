@@ -14,6 +14,7 @@ import {
   computeAccountStatus,
   computeLifecycleStage,
   computeProtectedClear,
+  shouldCreateInactivityTask,
   mapStandingOrderStatus,
   mapAccountCategory,
   mapAcquisitionSource,
@@ -437,4 +438,21 @@ test('lifecycle (option B): Onboarding hops to Retention at the 3rd order; other
   assert.equal(computeLifecycleStage('RETENTION', 3), null);
   assert.equal(computeLifecycleStage('WIN_BACK', 99), null);
   assert.equal(computeLifecycleStage('CLOSED', 99), null);
+});
+
+test('inactivity nudge (item 5): fires in the 21-45 window, only once eligible, respects the rollout cutoff', () => {
+  // the first quiet crossing
+  assert.equal(shouldCreateInactivityTask(null, 5, 21), true);
+  assert.equal(shouldCreateInactivityTask('', 5, 30), true);
+  assert.equal(shouldCreateInactivityTask(null, 5, 45), true);
+  // too fresh or already tagged
+  assert.equal(shouldCreateInactivityTask(null, 5, 20), false);
+  assert.equal(shouldCreateInactivityTask('MARKET_SLOW', 5, 25), false);
+  // rollout cutoff: long-quiet legacy accounts never get an auto-task
+  assert.equal(shouldCreateInactivityTask(null, 5, 46), false);
+  assert.equal(shouldCreateInactivityTask(null, 5, 978), false);
+  // never-ordered accounts are onboarding, not inactive
+  assert.equal(shouldCreateInactivityTask(null, 0, 25), false);
+  assert.equal(shouldCreateInactivityTask(null, null, 25), false);
+  assert.equal(shouldCreateInactivityTask(null, 5, null), false);
 });
