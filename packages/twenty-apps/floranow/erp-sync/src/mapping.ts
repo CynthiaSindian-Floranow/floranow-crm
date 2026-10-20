@@ -170,6 +170,53 @@ export const mapBlockedStatus = (
   return BLOCKED_STATUS_MAP[normalize(blocked.code)] ?? 'OTHER';
 };
 
+// Statuses only a human may set; the clock never writes over them.
+const MANUAL_ONLY_STATUSES = new Set(['CLOSED', 'COLD_LIST']);
+
+// The account-status clock (business decision D2, Oct 2026), computed from
+// already-mirrored facts on every mirror run. An ERP block trumps the clock —
+// and the ERP's own "allow overdue" exception is already folded into its
+// blocked flag, so it is not re-derived here.
+//   BLOCKED       — the ERP blocks the account
+//   NEVER_ORDERED — no orders, ever
+//   ACTIVE        — last order 7 days ago or less
+//   INACTIVE      — 8 to 30 days since the last order
+//   CHURNED       — more than 30 days
+// Returns null when the status must be left alone (manual-only state, or an
+// order history without a usable date — never guess).
+export const computeAccountStatus = (
+  currentStatus: unknown,
+  blocked: ErpCustomerSnapshot['blocked'],
+  lifetimeOrderCount: number | null,
+  daysSinceLastOrder: number | null,
+): string | null => {
+  if (typeof currentStatus === 'string' && MANUAL_ONLY_STATUSES.has(currentStatus)) {
+    return null;
+  }
+
+  if (blocked.blocked) {
+    return 'BLOCKED';
+  }
+
+  if (!lifetimeOrderCount) {
+    return 'NEVER_ORDERED';
+  }
+
+  if (daysSinceLastOrder === null) {
+    return null;
+  }
+
+  if (daysSinceLastOrder <= 7) {
+    return 'ACTIVE';
+  }
+
+  if (daysSinceLastOrder <= 30) {
+    return 'INACTIVE';
+  }
+
+  return 'CHURNED';
+};
+
 // Lead.source and Company.acquisitionSource share values except SCRAPE_SOCIAL,
 // which only exists on the lead.
 export const mapAcquisitionSource = (

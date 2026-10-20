@@ -9,6 +9,7 @@ import { changedFieldsOnly } from './diff';
 import {
   buildFinancialFields,
   buildMirrorFields,
+  computeAccountStatus,
   type UnmappedValue,
 } from './mapping';
 import { TwentyClient, type MirrorCompany } from './twenty-client';
@@ -103,6 +104,19 @@ export const mirrorCompanies = async (
 
         Object.assign(fields, financialPayload.fields);
         unmapped.push(...financialPayload.unmapped);
+
+        // Account status follows the clock (D2) — computed from the facts
+        // this run just mirrored. null = hands off (manual-only state).
+        const computedStatus = computeAccountStatus(
+          company.accountStatus,
+          snapshot.blocked,
+          customerFinancials.orders.lifetime_count ?? null,
+          (financialPayload.fields.daysSinceLastOrder as number | null) ?? null,
+        );
+
+        if (computedStatus !== null) {
+          fields.accountStatus = computedStatus;
+        }
       }
 
       const changed = changedFieldsOnly(
