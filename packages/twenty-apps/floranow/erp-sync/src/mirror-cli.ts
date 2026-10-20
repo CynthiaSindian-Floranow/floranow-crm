@@ -102,6 +102,19 @@ const main = async () => {
     console.log(note);
   }
 
+  for (const c of report.codIncidents) {
+    const note =
+      c.outcome === 'created'
+        ? `INCIDENT created — COD violation: ${c.companyName} is Cash-on-Delivery but carries a balance`
+        : c.outcome === 'wouldCreate'
+          ? `INCIDENT (dry-run) — would open a COD violation for ${c.companyName}`
+          : c.outcome === 'resolved'
+            ? `INCIDENT resolved — ${c.companyName}'s COD balance returned to zero`
+            : `INCIDENT (dry-run) — would resolve the COD violation for ${c.companyName}`;
+
+    console.log(note);
+  }
+
   const count = (outcome: CompanyOutcome['outcome']) =>
     report.outcomes.filter((o) => o.outcome === outcome).length;
 
