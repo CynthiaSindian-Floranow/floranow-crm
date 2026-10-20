@@ -11,6 +11,7 @@ import {
   buildIncidentFields,
   buildOrderEventFields,
   buildStandingOrderFields,
+  computeAccountStatus,
   mapStandingOrderStatus,
   mapAccountCategory,
   mapAcquisitionSource,
@@ -384,4 +385,31 @@ test('changedFieldsOnly returns only fields that actually differ', () => {
     ),
     { value: { amountMicros: 40_000_000, currencyCode: 'AED' } },
   );
+});
+
+test('account status clock (D2): recency buckets, block trumps, manual states untouched', () => {
+  const unblocked = { blocked: false, code: null } as ErpCustomerSnapshot['blocked'];
+  const blocked = { blocked: true, code: 'overdue_invoices' } as ErpCustomerSnapshot['blocked'];
+
+  // the clock
+  assert.equal(computeAccountStatus('NEVER_ORDERED', unblocked, 5, 0), 'ACTIVE');
+  assert.equal(computeAccountStatus('ACTIVE', unblocked, 5, 7), 'ACTIVE');
+  assert.equal(computeAccountStatus('ACTIVE', unblocked, 5, 8), 'INACTIVE');
+  assert.equal(computeAccountStatus('ACTIVE', unblocked, 5, 30), 'INACTIVE');
+  assert.equal(computeAccountStatus('INACTIVE', unblocked, 5, 31), 'CHURNED');
+
+  // never ordered
+  assert.equal(computeAccountStatus('NEVER_ORDERED', unblocked, 0, null), 'NEVER_ORDERED');
+  assert.equal(computeAccountStatus('ACTIVE', unblocked, null, null), 'NEVER_ORDERED');
+
+  // an ERP block trumps the clock, even for never-ordered accounts
+  assert.equal(computeAccountStatus('ACTIVE', blocked, 5, 2), 'BLOCKED');
+  assert.equal(computeAccountStatus('NEVER_ORDERED', blocked, 0, null), 'BLOCKED');
+
+  // manual-only states are never overwritten
+  assert.equal(computeAccountStatus('CLOSED', unblocked, 5, 2), null);
+  assert.equal(computeAccountStatus('COLD_LIST', blocked, 5, 2), null);
+
+  // ordered but no usable date: refuse to guess
+  assert.equal(computeAccountStatus('ACTIVE', unblocked, 5, null), null);
 });
