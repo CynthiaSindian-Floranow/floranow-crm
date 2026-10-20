@@ -12,6 +12,7 @@ import {
   computeAccountStatus,
   computeLifecycleStage,
   computeProtectedClear,
+  shouldCreateInactivityTask,
   type UnmappedValue,
 } from './mapping';
 import { TwentyClient, type MirrorCompany } from './twenty-client';
@@ -29,10 +30,16 @@ export type CompanyOutcome = {
   error?: string;
 };
 
+export type InactivityTaskOutcome = {
+  companyName: string;
+  outcome: 'created' | 'wouldCreate' | 'noOwner';
+};
+
 export type MirrorReport = {
   dryRun: boolean;
   totalCompanies: number;
   outcomes: CompanyOutcome[];
+  inactivityTasks: InactivityTaskOutcome[];
 };
 
 const ERP_BATCH_SIZE = 100;
@@ -75,6 +82,7 @@ export const mirrorCompanies = async (
 
   const syncStamp = new Date().toISOString();
   const outcomes: CompanyOutcome[] = [];
+  const inactivityTasks: InactivityTaskOutcome[] = [];
 
   for (const company of companies) {
     const debtorNumber = company.debtorNumber!.trim();
@@ -130,6 +138,51 @@ export const mirrorCompanies = async (
         if (lifecycle !== null) {
           fields.lifecycleStage = lifecycle;
         }
+
+        // Inactivity nudge (item 5): first quiet crossing (21–45 days, no
+        // sub-tag yet) → one open task for the owner to record the reason.
+        // One task per account at a time; ownerless accounts are reported.
+        if (
+          shouldCreateInactivityTask(
+            company.inactivitySubTag,
+            customerFinancials.orders.lifetime_count ?? null,
+            (financialPayload.fields.daysSinceLastOrder as number | null) ??
+              null,
+          )
+        ) {
+          const ownerId =
+            typeof company.accountOwnerId === 'string' &&
+            company.accountOwnerId !== ''
+              ? company.accountOwnerId
+              : null;
+
+          if (ownerId === null) {
+            inactivityTasks.push({
+              companyName: company.name,
+              outcome: 'noOwner',
+            });
+          } else if (!(await hasOpenInactivityTask(twenty, company.id))) {
+            if (dryRun) {
+              inactivityTasks.push({
+                companyName: company.name,
+                outcome: 'wouldCreate',
+              });
+            } else {
+              const task = await twenty.createTask({
+                title: `Set inactivity reason — ${company.name}`,
+                status: 'TODO',
+                dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+                assigneeId: ownerId,
+              });
+
+              await twenty.createTaskTarget(task.id, company.id);
+              inactivityTasks.push({
+                companyName: company.name,
+                outcome: 'created',
+              });
+            }
+          }
+        }
       }
 
       // Protected window (D3): ends at day 60 after creation, and only then.
@@ -174,5 +227,29 @@ export const mirrorCompanies = async (
     }
   }
 
-  return { dryRun, totalCompanies: companies.length, outcomes };
+  return { dryRun, totalCompanies: companies.length, outcomes, inactivityTasks };
+};
+
+// An account has at most one open inactivity nudge at a time; a Done task
+// means the reason was recorded (or the account reactivated) and a future
+// quiet spell may create a fresh one.
+const hasOpenInactivityTask = async (
+  twenty: TwentyClient,
+  companyId: string,
+): Promise<boolean> => {
+  const taskIds = await twenty.findTaskIdsForCompany(companyId);
+
+  for (const taskId of taskIds) {
+    const task = await twenty.findTask(taskId);
+
+    if (
+      task !== null &&
+      (task.title ?? '').startsWith('Set inactivity reason') &&
+      task.status !== 'DONE'
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 };
