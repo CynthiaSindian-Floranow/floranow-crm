@@ -12,6 +12,8 @@ import {
   buildOrderEventFields,
   buildStandingOrderFields,
   computeAccountStatus,
+  computeLifecycleStage,
+  computeProtectedClear,
   mapStandingOrderStatus,
   mapAccountCategory,
   mapAcquisitionSource,
@@ -412,4 +414,27 @@ test('account status clock (D2): recency buckets, block trumps, manual states un
 
   // ordered but no usable date: refuse to guess
   assert.equal(computeAccountStatus('ACTIVE', unblocked, 5, null), null);
+});
+
+test('protected window (D3): clears at day 60 only, never re-protects, never guesses', () => {
+  const day = (n: number) => new Date(Date.UTC(2026, 9, 20 - n)).toISOString();
+  const today = new Date(Date.UTC(2026, 9, 20));
+
+  assert.equal(computeProtectedClear(true, day(59), today), null); // still inside the window
+  assert.equal(computeProtectedClear(true, day(60), today), false); // day 60: clear
+  assert.equal(computeProtectedClear(true, day(400), today), false);
+  assert.equal(computeProtectedClear(false, day(400), today), null); // never re-protect
+  assert.equal(computeProtectedClear(true, null, today), null); // no date: hands off
+  assert.equal(computeProtectedClear(true, 'not-a-date', today), null);
+});
+
+test('lifecycle (option B): Onboarding hops to Retention at the 3rd order; other stages untouched', () => {
+  assert.equal(computeLifecycleStage('ONBOARDING', 3), 'RETENTION');
+  assert.equal(computeLifecycleStage('ONBOARDING', 24), 'RETENTION');
+  assert.equal(computeLifecycleStage('ONBOARDING', 2), null);
+  assert.equal(computeLifecycleStage('ONBOARDING', 0), null);
+  assert.equal(computeLifecycleStage('ONBOARDING', null), null);
+  assert.equal(computeLifecycleStage('RETENTION', 3), null);
+  assert.equal(computeLifecycleStage('WIN_BACK', 99), null);
+  assert.equal(computeLifecycleStage('CLOSED', 99), null);
 });

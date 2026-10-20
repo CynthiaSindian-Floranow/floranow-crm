@@ -10,6 +10,8 @@ import {
   buildFinancialFields,
   buildMirrorFields,
   computeAccountStatus,
+  computeLifecycleStage,
+  computeProtectedClear,
   type UnmappedValue,
 } from './mapping';
 import { TwentyClient, type MirrorCompany } from './twenty-client';
@@ -117,6 +119,27 @@ export const mirrorCompanies = async (
         if (computedStatus !== null) {
           fields.accountStatus = computedStatus;
         }
+
+        // Two clocks (option B): lifecycle hops Onboarding → Retention at the
+        // 3rd order, regardless of the protected window.
+        const lifecycle = computeLifecycleStage(
+          company.lifecycleStage,
+          customerFinancials.orders.lifetime_count ?? null,
+        );
+
+        if (lifecycle !== null) {
+          fields.lifecycleStage = lifecycle;
+        }
+      }
+
+      // Protected window (D3): ends at day 60 after creation, and only then.
+      const protectedClear = computeProtectedClear(
+        company.newClientProtected,
+        company.createdAt,
+      );
+
+      if (protectedClear !== null) {
+        fields.newClientProtected = protectedClear;
       }
 
       const changed = changedFieldsOnly(

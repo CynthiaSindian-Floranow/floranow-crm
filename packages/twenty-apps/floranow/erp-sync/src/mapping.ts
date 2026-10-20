@@ -217,6 +217,53 @@ export const computeAccountStatus = (
   return 'CHURNED';
 };
 
+// The protected window ends at day 60 after account creation and at day 60
+// only (business decision D3, Oct 2026) — orders do not end it. The clear
+// fires once (true → false); nothing ever re-protects an account, and a
+// missing or unreadable creation date clears nothing.
+// Note: for future legacy re-provisioning the anchor may need to be the real
+// relationship start rather than the CRM creation date.
+export const computeProtectedClear = (
+  currentlyProtected: unknown,
+  createdAt: unknown,
+  today: Date = new Date(),
+): boolean | null => {
+  if (currentlyProtected !== true) {
+    return null;
+  }
+
+  if (typeof createdAt !== 'string' || createdAt === '') {
+    return null;
+  }
+
+  const created = new Date(createdAt);
+
+  if (Number.isNaN(created.getTime())) {
+    return null;
+  }
+
+  const ageDays = Math.floor(
+    (today.getTime() - created.getTime()) / 86_400_000,
+  );
+
+  return ageDays >= 60 ? false : null;
+};
+
+// Two clocks (team decision, Oct 2026, option B): lifecycle moves to
+// Retention at the 3rd order, independent of the protected window. Only the
+// Onboarding → Retention hop is automated; Win-Back and Closed stay
+// human-owned, so any stage other than Onboarding is left alone.
+export const computeLifecycleStage = (
+  currentStage: unknown,
+  lifetimeOrderCount: number | null,
+): string | null => {
+  if (currentStage !== 'ONBOARDING') {
+    return null;
+  }
+
+  return (lifetimeOrderCount ?? 0) >= 3 ? 'RETENTION' : null;
+};
+
 // Lead.source and Company.acquisitionSource share values except SCRAPE_SOCIAL,
 // which only exists on the lead.
 export const mapAcquisitionSource = (
