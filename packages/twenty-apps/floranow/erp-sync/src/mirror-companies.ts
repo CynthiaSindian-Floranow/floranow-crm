@@ -40,6 +40,7 @@ export type InactivityTaskOutcome = {
 export type CodIncidentOutcome = {
   companyName: string;
   outcome: 'created' | 'wouldCreate' | 'resolved' | 'wouldResolve';
+  repeat?: boolean; // second-or-later violation: prepay-only was set
 };
 
 export type MirrorReport = {
@@ -201,19 +202,29 @@ export const mirrorCompanies = async (
           customerFinancials.receivable.total,
         );
 
-        const openCodIncident = (
-          await twenty.findChildrenByCompany('incidents', company.id)
-        ).find(
-          (incident) =>
-            incident.category === 'COD_VIOLATION' &&
-            incident.status === 'OPEN',
+        const companyIncidents = await twenty.findChildrenByCompany(
+          'incidents',
+          company.id,
+        );
+
+        const codViolationHistory = companyIncidents.filter(
+          (incident) => incident.category === 'COD_VIOLATION',
+        );
+
+        const openCodIncident = codViolationHistory.find(
+          (incident) => incident.status === 'OPEN',
         );
 
         if (violation && openCodIncident === undefined) {
           if (dryRun) {
+            if (codViolationHistory.length >= 1 && company.prepayOnly !== true) {
+              fields.prepayOnly = true; // shows in the preview; dry-run writes nothing
+            }
+
             codIncidents.push({
               companyName: company.name,
               outcome: 'wouldCreate',
+              repeat: codViolationHistory.length >= 1,
             });
           } else {
             await twenty.createChild('incidents', {
@@ -223,7 +234,19 @@ export const mirrorCompanies = async (
               status: 'OPEN',
               companyId: company.id,
             });
-            codIncidents.push({ companyName: company.name, outcome: 'created' });
+
+            // Repeat offender (BRD UC-20 E1): a second violation flips the
+            // account to prepay-only, pending Finance review. Set once,
+            // never auto-unset — releasing it is Finance's call.
+            if (codViolationHistory.length >= 1 && company.prepayOnly !== true) {
+              fields.prepayOnly = true;
+            }
+
+            codIncidents.push({
+              companyName: company.name,
+              outcome: 'created',
+              repeat: codViolationHistory.length >= 1,
+            });
           }
         } else if (!violation && openCodIncident !== undefined) {
           if (dryRun) {
